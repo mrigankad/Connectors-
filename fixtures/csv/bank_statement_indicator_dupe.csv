@@ -1,0 +1,5 @@
+id,date,amount,dc,memo
+X1,2026-09-01,100.00,CR,one
+X2,2026-09-01,(50.00),DR,bad parentheses under minus locale
+X1,2026-09-01,100.00,CR,duplicate of X1
+X3,2026-09-02,25.00,XX,unknown indicator

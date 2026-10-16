@@ -1,0 +1,32 @@
+{
+  "connector_id": "files.pptx",
+  "catalog_id": "WCN-286",
+  "family": "files",
+  "surface": "pptx",
+  "display_name": "PowerPoint PPTX parser",
+  "edition": "OOXML PresentationML (.pptx) via python-pptx 1.0.2; legacy .ppt and macro-enabled .pptm are rejected",
+  "adapter_version": "0.1.0",
+  "schema_version": "1",
+  "cursor_version": null,
+  "auth_modes": ["inherited"],
+  "config_schema": {"type": "object", "properties": {}, "additionalProperties": false},
+  "auth_schema": {"type": "object", "properties": {}, "additionalProperties": false},
+  "capabilities": ["FileParser"],
+  "operations": [
+    {"name": "parse", "capability": "FileParser", "description": "Extract slide text, table cells and speaker notes as fragments with slide-number citations; image-only slides marked incomplete", "scopes": [], "mutates": false}
+  ],
+  "resource_types": ["fragment"],
+  "rate_policy": {"requests_per_minute": null, "concurrency": 4, "honour_retry_after": false, "max_attempts": 1, "base_backoff_seconds": 0, "max_backoff_seconds": 0},
+  "raw_data_support": true,
+  "deletion_semantics": "none",
+  "acl_coverage": "not_applicable",
+  "owner": "platform-team",
+  "limitations": [
+    "No OCR: image-only slides are reported as incomplete fragments, not read",
+    "Charts, SmartArt, embedded objects, slide masters/layouts and comments are not extracted",
+    "No layout fidelity; reading order is shape order, which may differ from visual order",
+    "Fixtures are generated with python-pptx; files authored in Microsoft PowerPoint are still needed for sandbox-level verification"
+  ],
+  "verification_level": "fixture_tested",
+  "docs_contract": "docs/provider-contracts/files-pptx.md"
+}

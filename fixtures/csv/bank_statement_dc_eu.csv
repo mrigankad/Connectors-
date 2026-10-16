@@ -1,0 +1,5 @@
+ID;Buchung;Soll;Haben;Verwendungszweck
+A1;01.09.2026;;1.250,00;Zahlung Kunde
+A2;02.09.2026;340,50;;Gebühren
+A3;03.09.2026;5.000,00;;Lieferant
+A4;03.09.2026;;;Leer

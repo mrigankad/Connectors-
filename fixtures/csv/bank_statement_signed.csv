@@ -1,0 +1,5 @@
+Txn ID,Booking Date,Value Date,Amount,Currency,Reference,Description
+T-1001,2026-09-01,2026-09-01,"1,250.00",INR,INV-77,Customer payment
+T-1002,2026-09-02,2026-09-02,"-340.50",INR,FEE,Bank charges
+T-1003,2026-09-03,2026-09-04,"-5,000.00",INR,PAY-12,Supplier payout
+T-1004,2026-09-03,2026-09-03,"0.01",INR,,Interest

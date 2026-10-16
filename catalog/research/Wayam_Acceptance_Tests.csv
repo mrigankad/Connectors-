@@ -1,0 +1,49 @@
+ID,Area,Scenario,Expected result,Evidence state,Implementation note
+T-01,Identity,Two tenants reuse source ID,"No data, cursor, object or cache crosses tenant boundary",Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-02,Identity,Guessed connection ID,403/404 without secret or resource disclosure,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-03,Identity,Product grant removed,Other product cannot read existing connection data,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-04,OAuth,Invalid state/redirect/expired callback,Callback rejected with no connection created,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-05,OAuth,Token expires during pagination,One scoped refresh; job resumes without missing page,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-06,OAuth,Concurrent refresh attempts,Serialized refresh; current credentials retained,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-07,OAuth,Refresh grant revoked,Connection blocked; no infinite retries,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-08,OAuth,Credential rotation and scope reduction,New scoped credentials used; excess operations rejected,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-09,Sync,Multi-page boundaries and repeated page token,All unique records captured; pagination cycle terminates as error,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-10,Sync,Equal updated timestamps,Stable tie-breaker prevents lost records,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-11,Sync,Late record/update overlap,Overlap dedup retains newest source version,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-12,Sync,Expired delta cursor,Controlled resync; no false complete or silent gap,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-13,Sync,Duplicate record/event,Idempotent storage; counts distinguish replays,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-14,Sync,Full crawl stops halfway,Unseen objects are not falsely deleted,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-15,Sync,Source deletion and retention,Derived searchable content removed under policy; minimal audit retained,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-16,Recovery,Crash before batch commit,Replay produces complete batch without advancing cursor,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-17,Recovery,Crash after commit before acknowledgment,Retry deduplicates; outbox eventually delivered,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-18,Recovery,Worker lease expires,Another worker resumes; no concurrent checkpoint corruption,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-19,Recovery,Cancel and restart,Consistent resumable state and visible cancellation,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-20,Reliability,HTTP 429 with Retry-After,Bounded delayed retry; per-tenant/provider fairness,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-21,Reliability,5xx/timeouts for one provider,Backoff/circuit policy; other connections progress,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-22,Reliability,HTTP 200 partial error/truncation,Body inspected; incomplete data surfaced as partial/failure,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-23,Reliability,Quota and large-volume load,Backpressure; no starvation; measured lag and cost,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-24,Webhook,Invalid signature/body modification,Reject before durable job creation,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-25,Webhook,Duplicate and old replay,Deduplicated/rejected according to provider contract,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-26,Webhook,Out-of-order update/delete,Source-version policy preserves correct final state,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-27,ACL,Private and shared documents,Only authorized user receives fragments/citations,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-28,ACL,Nested group member removed,Membership/ACL refresh blocks access within measured policy target,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-29,ACL,Unknown identity or stale ACL evidence,Fail closed; no document text sent to model,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-30,ACL,Move/link change/permission removal,Permissions recomputed; old access removed,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-31,ACL,Connection revoked,Immediate access block plus configured derivative purge,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-32,Files,Malformed/empty/oversized input,Typed error or quarantine; resource limits enforced,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-33,Files,Zip bomb/path traversal/XML entity,Rejected safely; no external file/network access,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-34,Files,Macros and embedded active content,Never execute; documented extraction limitations,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-35,Files,DOCX/PPTX source anchors,Expected paragraph/table/slide/notes resolve to source,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-36,Files,Same file from different tenants,Dedup preserves tenant and source authorization separation,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-37,Finance,Debit/credit sign and reversals,Normalized values match approved source examples exactly,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-38,Finance,Currency precision and dates,No float rounding; booking/value dates and timezone retained,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-39,Finance,Bank account/entity mismatch,Reject/quarantine before SAMYAK reconciliation,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-40,Finance,Statement count/balance mismatch,Source control totals fail visibly; no fabricated balanced result,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-41,Query,Write/multiple-statement/side-effect attempt,Rejected by policy and DB role; source unchanged,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-42,Query,Query timeout/row/cost limit,Bounded execution; truncation/staleness explicitly labeled,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-43,Query,Source row-level security,Caller entitlements preserved; shared admin cannot bypass policy,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-44,Engineering,Actions token tries dispatch/rerun,Read-only credential and capability reject mutation,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-45,Engineering,Jira project/Vercel project restriction,Only allowlisted project resources visible,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-46,Security,Secret/payload log redaction,No credentials or sensitive raw content in logs/fixtures/traces,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-47,Security,SSRF redirect/content prompt injection,Destination policy enforced; content cannot trigger tools or reveal secrets,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable
+T-48,E2E,SAMYAK import/Bodham answer/Chakram lineage,Three reproducible product demos retain provenance and explicit verification level,Required proposal; not run,Implement with connector-specific fixture and live lane where applicable

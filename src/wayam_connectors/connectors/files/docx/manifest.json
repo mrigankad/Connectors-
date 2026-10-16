@@ -1,0 +1,32 @@
+{
+  "connector_id": "files.docx",
+  "catalog_id": "WCN-285",
+  "family": "files",
+  "surface": "docx",
+  "display_name": "Word DOCX parser",
+  "edition": "OOXML WordprocessingML (.docx) via python-docx 1.2.0; legacy .doc and macro-enabled .docm are rejected",
+  "adapter_version": "0.1.0",
+  "schema_version": "1",
+  "cursor_version": null,
+  "auth_modes": ["inherited"],
+  "config_schema": {"type": "object", "properties": {}, "additionalProperties": false},
+  "auth_schema": {"type": "object", "properties": {}, "additionalProperties": false},
+  "capabilities": ["FileParser"],
+  "operations": [
+    {"name": "parse", "capability": "FileParser", "description": "Extract body paragraphs and table cells as fragments with paragraph/table/row/column anchors", "scopes": [], "mutates": false}
+  ],
+  "resource_types": ["fragment"],
+  "rate_policy": {"requests_per_minute": null, "concurrency": 4, "honour_retry_after": false, "max_attempts": 1, "base_backoff_seconds": 0, "max_backoff_seconds": 0},
+  "raw_data_support": true,
+  "deletion_semantics": "none",
+  "acl_coverage": "not_applicable",
+  "owner": "platform-team",
+  "limitations": [
+    "Headers, footers, footnotes, endnotes, comments, text boxes, SmartArt and images are not extracted; documents with images or text boxes are marked incomplete",
+    "No OCR; no layout or formatting fidelity; styles are reported by name only",
+    "Tracked changes: inserted text is included, deleted text is excluded, as python-docx reads the document body",
+    "Fixtures are generated with python-docx; files authored in Microsoft Word are still needed for sandbox-level verification"
+  ],
+  "verification_level": "fixture_tested",
+  "docs_contract": "docs/provider-contracts/files-docx.md"
+}

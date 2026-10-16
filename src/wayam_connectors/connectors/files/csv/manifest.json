@@ -1,0 +1,32 @@
+{
+  "connector_id": "files.csv",
+  "catalog_id": "WCN-283",
+  "family": "files",
+  "surface": "csv",
+  "display_name": "CSV / TSV import",
+  "edition": "RFC 4180-style delimited text; Python csv module (stdlib, Python 3.12+)",
+  "adapter_version": "0.1.0",
+  "schema_version": "1",
+  "cursor_version": null,
+  "auth_modes": ["inherited"],
+  "config_schema": {"type": "object", "properties": {}, "additionalProperties": false},
+  "auth_schema": {"type": "object", "properties": {}, "additionalProperties": false},
+  "capabilities": ["FileParser"],
+  "operations": [
+    {"name": "parse", "capability": "FileParser", "description": "Parse delimited bytes with an explicit mapping into typed rows with row provenance", "scopes": [], "mutates": false}
+  ],
+  "resource_types": ["row"],
+  "rate_policy": {"requests_per_minute": null, "concurrency": 4, "honour_retry_after": false, "max_attempts": 1, "base_backoff_seconds": 0, "max_backoff_seconds": 0},
+  "raw_data_support": true,
+  "deletion_semantics": "none",
+  "acl_coverage": "not_applicable",
+  "owner": "platform-team",
+  "limitations": [
+    "No format guessing: delimiter, encoding, header, column types, number locale and date formats are declared by the mapping",
+    "Multi-line quoted fields are supported; malformed quoting fails the whole file",
+    "Files above the configured size limit are rejected rather than partially read",
+    "Export-side formula neutralisation is provided as a helper; this adapter itself only reads"
+  ],
+  "verification_level": "local_integration_verified",
+  "docs_contract": "docs/provider-contracts/files-csv.md"
+}

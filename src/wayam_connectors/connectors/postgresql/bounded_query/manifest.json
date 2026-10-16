@@ -1,0 +1,52 @@
+{
+  "connector_id": "postgresql.bounded_query",
+  "catalog_id": "WCN-140",
+  "family": "postgresql",
+  "surface": "bounded_query",
+  "display_name": "PostgreSQL (read-only bounded queries)",
+  "edition": "PostgreSQL 13+ over the libpq wire protocol via psycopg 3.3.6; verified locally against PostgreSQL 16.15",
+  "adapter_version": "0.1.0",
+  "schema_version": "1",
+  "cursor_version": null,
+  "auth_modes": ["password"],
+  "config_schema": {
+    "type": "object",
+    "required": ["host", "database", "user", "allowed_schemas"],
+    "properties": {
+      "host": {"type": "string"},
+      "port": {"type": "integer", "default": 5432},
+      "database": {"type": "string"},
+      "user": {"type": "string", "description": "A read-only role (NOSUPERUSER, no INSERT/UPDATE/DELETE on allowlisted schemas)"},
+      "sslmode": {"type": "string", "enum": ["require", "verify-ca", "verify-full", "disable"], "default": "require"},
+      "allowed_schemas": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+      "max_rows": {"type": "integer", "default": 1000, "maximum": 100000},
+      "statement_timeout_ms": {"type": "integer", "default": 10000, "maximum": 600000},
+      "connect_timeout_s": {"type": "integer", "default": 5},
+      "user_context_setting": {"type": ["string", "null"], "description": "GUC the customer's RLS policies read, e.g. app.current_user"},
+      "allow_private_network": {"type": "boolean", "default": false}
+    },
+    "additionalProperties": false
+  },
+  "auth_schema": {"type": "object", "required": ["password"], "properties": {"password": {"type": "string"}}, "additionalProperties": false},
+  "capabilities": ["ConnectionCheck", "ResourceDiscovery", "BoundedQuery"],
+  "operations": [
+    {"name": "check_connection", "capability": "ConnectionCheck", "description": "Connect, verify server version >= 13, verify the role is read-only on the allowlisted schemas", "scopes": ["CONNECT", "USAGE on allowlisted schemas"], "mutates": false},
+    {"name": "discover", "capability": "ResourceDiscovery", "description": "List tables/views the role can SELECT in allowlisted schemas with column types and RLS flag", "scopes": ["SELECT on pg_catalog"], "mutates": false},
+    {"name": "query", "capability": "BoundedQuery", "description": "Run one guarded SELECT in a READ ONLY transaction with statement_timeout, server-side parameters and a row cap", "scopes": ["SELECT on allowlisted objects"], "mutates": false}
+  ],
+  "resource_types": ["table", "view"],
+  "rate_policy": {"requests_per_minute": null, "concurrency": 4, "honour_retry_after": false, "max_attempts": 3, "base_backoff_seconds": 1.0, "max_backoff_seconds": 30.0},
+  "raw_data_support": false,
+  "deletion_semantics": "none",
+  "acl_coverage": "none",
+  "owner": "platform-team",
+  "limitations": [
+    "Live read queries only; no record sync / CDC (that is a separate future surface)",
+    "The static SQL guard is conservative: identifiers that collide with forbidden keywords are rejected even inside valid SELECTs; use quoted identifiers",
+    "Per-user policy depends on the customer defining RLS policies that read the configured GUC; without it, all queries run as the connection role",
+    "Cloud IAM/OAuth token authentication (RDS IAM, Azure AD) is not implemented; password auth only",
+    "search_path is forced to pg_catalog: queries must schema-qualify relations"
+  ],
+  "verification_level": "local_integration_verified",
+  "docs_contract": "docs/provider-contracts/postgresql-bounded-query.md"
+}

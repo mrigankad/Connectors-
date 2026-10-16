@@ -1,0 +1,80 @@
+{
+  "registry_version": "1",
+  "research_catalog": "catalog/research/Wayam_Connector_Catalog.json",
+  "research_as_of": "2026-10-16",
+  "note": "Implementation status per catalog id. Research evidence is never edited; this file is. Every id not listed is 'candidate' (unimplemented). Verification evidence lives in docs/verification-matrix.csv, not here.",
+  "entries": [
+    {
+      "catalog_id": "WCN-283",
+      "connector_id": "files.csv",
+      "status": "local_integration_verified",
+      "owner": "platform-team"
+    },
+    {
+      "catalog_id": "WCN-140",
+      "connector_id": "postgresql.bounded_query",
+      "status": "local_integration_verified",
+      "owner": "platform-team"
+    },
+    {
+      "catalog_id": "WCN-141",
+      "connector_id": null,
+      "status": "candidate",
+      "owner": "platform-team"
+    },
+    {
+      "catalog_id": "WCN-285",
+      "connector_id": "files.docx",
+      "status": "fixture_tested",
+      "owner": "platform-team"
+    },
+    {
+      "catalog_id": "WCN-286",
+      "connector_id": "files.pptx",
+      "status": "fixture_tested",
+      "owner": "platform-team"
+    },
+    {
+      "catalog_id": "WCN-119",
+      "connector_id": null,
+      "status": "candidate",
+      "owner": "platform-team"
+    },
+    {
+      "catalog_id": "WCN-049",
+      "connector_id": null,
+      "status": "candidate",
+      "owner": "platform-team"
+    },
+    {
+      "catalog_id": "WCN-050",
+      "connector_id": null,
+      "status": "candidate",
+      "owner": "platform-team"
+    },
+    {
+      "catalog_id": "WCN-097",
+      "connector_id": null,
+      "status": "candidate",
+      "owner": "platform-team"
+    },
+    {
+      "catalog_id": "WCN-099",
+      "connector_id": null,
+      "status": "candidate",
+      "owner": "platform-team"
+    },
+    {
+      "catalog_id": "WCN-084",
+      "connector_id": null,
+      "status": "candidate",
+      "owner": "platform-team"
+    },
+    {
+      "catalog_id": "WCN-109",
+      "connector_id": null,
+      "status": "candidate",
+      "owner": "platform-team"
+    }
+  ]
+}

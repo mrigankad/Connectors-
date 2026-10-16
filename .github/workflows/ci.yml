@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  offline:
+    # No secrets: lint, types, manifests/catalog validation, unit + contract tests, and integration/e2e tests
+    # against a disposable PostgreSQL service container.
+    name: Offline lane
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: wayam
+          POSTGRES_PASSWORD: wayam
+          POSTGRES_DB: wayam_connectors_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U wayam" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      WAYAM_TEST_DATABASE_URL: postgresql://wayam:wayam@127.0.0.1:5432/wayam_connectors_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv venv --python 3.12 .venv && uv pip install --python .venv/bin/python -e ".[dev]"
+      - name: Lint
+        run: .venv/bin/python -m ruff check src tests scripts && .venv/bin/python -m ruff format --check src tests scripts
+      - name: Typecheck
+        run: .venv/bin/python -m mypy
+      - name: Validate manifests and catalog registry
+        run: .venv/bin/python -m wayam_connectors.cli validate-manifests && .venv/bin/python -m wayam_connectors.cli validate-catalog
+      - name: Grant CREATEROLE to the test role (integration tests create a read-only role)
+        run: PGPASSWORD=wayam psql -h 127.0.0.1 -U wayam -d wayam_connectors_test -c "ALTER ROLE wayam CREATEROLE;"
+      - name: Tests (unit, contract, integration, e2e)
+        run: .venv/bin/python -m pytest -q -m "not live"
+      - name: OpenAPI contract is up to date
+        run: |
+          .venv/bin/python -m wayam_connectors.cli export-openapi /tmp/openapi.json
+          diff -q /tmp/openapi.json packages/contracts/openapi.json
+
+  live-canary:
+    # Credentialed canaries against approved test tenants. Runs only on a schedule when secrets exist; never on PRs.
+    name: Live canary (scheduled, needs secrets)
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "No live connectors are configured yet (see docs/credential-matrix.md)."

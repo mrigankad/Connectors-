@@ -1,0 +1,34 @@
+{
+  "as_of": "2026-10-16",
+  "note": "Runtime dependencies pinned in pyproject.toml / uv.lock. Licenses from PyPI metadata on 2026-10-16; transitive set is in uv.lock. Evaluated-not-adopted entries record the research findings so nobody silently imports restricted code later.",
+  "adopted": [
+    {"package": "pydantic", "version": "2.14.1", "license": "MIT", "use": "contracts, config"},
+    {"package": "pydantic-settings", "version": "2.16.0", "license": "MIT", "use": "settings"},
+    {"package": "fastapi", "version": "0.143.3", "license": "MIT", "use": "control API"},
+    {"package": "uvicorn", "version": "0.54.0", "license": "BSD-3-Clause", "use": "API server"},
+    {"package": "httpx", "version": "0.28.1", "license": "BSD-3-Clause", "use": "provider HTTP transport (next wave)"},
+    {"package": "psycopg[binary]", "version": "3.3.6", "license": "LGPL-3.0-only", "use": "platform state + PostgreSQL connector; dynamically linked wheel, no modification"},
+    {"package": "cryptography", "version": "50.0.2", "license": "Apache-2.0 OR BSD-3-Clause", "use": "AES-GCM credential/raw evidence encryption"},
+    {"package": "python-docx", "version": "1.2.0", "license": "MIT", "use": "files.docx"},
+    {"package": "python-pptx", "version": "1.0.2", "license": "MIT", "use": "files.pptx"},
+    {"package": "opentelemetry-api", "version": "1.45.1", "license": "Apache-2.0", "use": "tracing API (instrumentation pending)"},
+    {"package": "opentelemetry-sdk", "version": "1.45.1", "license": "Apache-2.0", "use": "tracing SDK (instrumentation pending)"},
+    {"package": "pytest", "version": "9.1.1", "license": "MIT", "use": "dev"},
+    {"package": "pytest-asyncio", "version": "1.4.0", "license": "Apache-2.0", "use": "dev"},
+    {"package": "ruff", "version": "0.17.1", "license": "MIT", "use": "dev"},
+    {"package": "mypy", "version": "2.4.0", "license": "MIT", "use": "dev"}
+  ],
+  "evaluated_not_adopted": [
+    {"project": "PyAirbyte", "finding": "LICENSE.md is ELv2 (S15)", "decision": "not a permissive shortcut; no import"},
+    {"project": "Airbyte Python CDK", "finding": "repo advertises MIT while umbrella docs use ELv2 language (S13, S14)", "decision": "resolve exact pinned package license before any reuse"},
+    {"project": "Nango", "finding": "ELv2 (S16)", "decision": "possible hosted auth pilot behind an interface; no code import"},
+    {"project": "n8n", "finding": "Sustainable Use License; commercial scope when external users configure workflows (S20)", "decision": "not used"},
+    {"project": "Activepieces", "finding": "MIT core, enterprise directories commercial (S17)", "decision": "not used in first batch"},
+    {"project": "Composio SDK", "finding": "MIT SDK, hosted backend separate (S18)", "decision": "not used"},
+    {"project": "Pipedream components", "finding": "source-available, commercial use restricted (S19)", "decision": "no copy into the platform"},
+    {"project": "dlt", "finding": "Apache-2.0 (S10)", "decision": "candidate for batch extractors in a later wave; not needed by P0 slices"},
+    {"project": "SAP PyRFC", "finding": "archived May 2026, needs SAP NW RFC SDK (S34)", "decision": "not adopted by default"},
+    {"project": "Docling / MarkItDown / Unstructured", "finding": "MIT / MIT / Apache-2.0 (S27, S30, S31)", "decision": "PDF/OCR candidates for P1; model/telemetry dependencies to review then"}
+  ],
+  "sbom": "uv.lock is the pinned transitive inventory; generate CycloneDX from it in CI once the SBOM tooling is chosen"
+}

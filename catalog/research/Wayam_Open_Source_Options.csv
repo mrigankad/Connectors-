@@ -1,0 +1,24 @@
+Project,Useful component,License boundary,Recommendation
+dlt,Python incremental extraction/loading helpers,Apache-2.0 core [S10],Strong batch adapter candidate; does not implement end-user document ACLs
+Meltano,Declarative data-pipeline environment and plugin hub,MIT engine; plugin licenses vary [S11],Use when operating multiple Singer taps warrants an environment
+Singer SDK,Reusable tap/target framework and state patterns,Apache-2.0 SDK [S12],Evaluate for long-tail read extractors; each tap still needs validation
+Airbyte platform/connectors,Replication catalog and connector runtime,Current umbrella docs describe ELv2; inspect connector metadata [S13],Optional isolated replication backend; assess embedded/managed-service fit
+Airbyte Python CDK,API source framework and declarative extraction,"CDK repository advertises MIT while newer umbrella docs use broader ELv2 language [S14, S13]",Resolve exact pinned package/license before reuse; no blanket MIT assumption
+PyAirbyte,Python execution of Airbyte sources,Current LICENSE.md is ELv2 [S15],Not a permissive MIT shortcut around platform restrictions
+Nango,"OAuth, tokens and product integration runtime",ELv2; cloud and enterprise features differ [S16],Good auth/runtime pilot; verify features and commercial embedding terms
+Activepieces,Workflow pieces and automation runtime,MIT core; designated enterprise directories commercial [S17],Reuse eligible pieces or evaluate runtime; embedding features checked separately
+n8n,Workflow orchestration and integration nodes,Sustainable Use License; commercial enterprise features [S20],Current FAQ distinguishes internally authored client workflows from external users configuring them; check exact Wayam product flow
+Apache Camel,Routing and a large component ecosystem,Apache-2.0 [S21],Strong Java integration/gateway option for enterprise protocols
+Apache NiFi,Managed dataflow and processors,Apache-2.0 [S22],Consider for customer-managed data movement; operationally heavier
+Debezium,Database change capture,Apache-2.0 core; noted subcomponent exceptions [S23],Add when justified by freshness/volume; CDC is not a finance business API
+Temporal,Durable workflow execution/retries,MIT server [S24],Later orchestration upgrade if durable long-running flows justify it
+Composio SDK,Client SDK and provider adapters for hosted toolkits,MIT SDK repository; hosted toolkit backend/service separate [S18],Evaluate hosted tool access; do not claim entire backend is self-hostable
+Pipedream components,Public integration components and hosted platform,Source Available License excludes commercial uses as stated in root license [S19],Evaluate commercial service; no unrestricted copy into Wayam
+MCP reference servers,Protocol/SDK examples,Reference implementation scope [S25],Learn from them; project expressly says these are not production-ready solutions
+MCP Toolbox for Databases,Database tools exposed to agent clients,Apache-2.0 repository [S26],Evaluate curated query tools behind Bodham policy
+Docling,Structured document conversion/OCR,MIT code; model dependencies reviewed separately [S27],Good PDF/layout reader candidate
+MarkItDown,Office/file-to-Markdown conversion,MIT [S30],Good broad text reader; evaluate extraction fidelity per format
+Unstructured,Document partitioning/extraction,Apache-2.0 project; hosted service separate [S31],Alternative parser; review dependencies and telemetry settings
+LangChain,Agent/tool and document-loader libraries,MIT repository; packages/services separately checked [S32],Optional orchestration/loaders; no replacement for sync/ACL platform
+LlamaIndex,Data/document loaders and retrieval components,MIT repository; hosted offerings separate [S33],Optional ingestion helpers; evaluate each integration dependency
+SAP PyRFC,SAP RFC bindings,Archived 28 May 2026; separate SAP NW RFC SDK dependency [S34],Do not choose as the new default without supported-runtime plan; prefer released APIs where available

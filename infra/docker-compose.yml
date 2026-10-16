@@ -1,0 +1,32 @@
+# Local development: API, worker and PostgreSQL. No real secrets here; copy infra/.env.example to infra/.env.
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: wayam
+      POSTGRES_PASSWORD: wayam
+      POSTGRES_DB: wayam_connectors
+    ports: ["127.0.0.1:5432:5432"]
+    volumes: ["wayam-pg:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wayam"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  api:
+    build: { context: .., dockerfile: infra/Dockerfile }
+    command: ["wayam-connectors", "serve", "--host", "0.0.0.0", "--port", "8090"]
+    env_file: [.env]
+    environment:
+      WAYAM_DATABASE_URL: postgresql://wayam:wayam@db:5432/wayam_connectors
+    ports: ["127.0.0.1:8090:8090"]
+    depends_on: { db: { condition: service_healthy } }
+  worker:
+    build: { context: .., dockerfile: infra/Dockerfile }
+    command: ["wayam-connectors", "worker", "--worker-id", "compose-worker-1"]
+    env_file: [.env]
+    environment:
+      WAYAM_DATABASE_URL: postgresql://wayam:wayam@db:5432/wayam_connectors
+    depends_on: { db: { condition: service_healthy } }
+volumes:
+  wayam-pg: {}

@@ -1,0 +1,53 @@
+{
+  "connector_id": "aws.s3",
+  "catalog_id": "WCN-119",
+  "family": "aws",
+  "surface": "s3",
+  "display_name": "Amazon S3 objects",
+  "edition": "Amazon S3 REST API via boto3 1.43.114 / botocore service model (ListObjectsV2, ListObjectVersions, HeadBucket, GetBucketVersioning, HeadObject, GetObject; STS AssumeRole)",
+  "adapter_version": "0.1.0",
+  "schema_version": "1",
+  "cursor_version": "1",
+  "auth_modes": ["access_key", "assume_role", "ambient"],
+  "config_schema": {
+    "type": "object",
+    "required": ["bucket", "allowed_prefixes"],
+    "properties": {
+      "bucket": {"type": "string"},
+      "region": {"type": "string", "default": "us-east-1"},
+      "allowed_prefixes": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+      "endpoint_url": {"type": ["string", "null"]},
+      "auth_mode": {"type": "string", "enum": ["access_key", "assume_role", "ambient"], "default": "access_key"},
+      "role_arn": {"type": ["string", "null"]},
+      "external_id": {"type": ["string", "null"]},
+      "use_versions": {"type": "boolean", "default": false},
+      "max_object_bytes": {"type": "integer", "default": 52428800},
+      "page_size": {"type": "integer", "minimum": 1, "maximum": 1000, "default": 1000},
+      "allow_private_network": {"type": "boolean", "default": false}
+    },
+    "additionalProperties": false
+  },
+  "auth_schema": {"type": "object", "properties": {"access_key_id": {"type": ["string", "null"]}, "secret_access_key": {"type": ["string", "null"]}, "session_token": {"type": ["string", "null"]}}, "additionalProperties": false},
+  "capabilities": ["ConnectionCheck", "ResourceDiscovery", "RecordSync", "DocumentFetch"],
+  "operations": [
+    {"name": "check_connection", "capability": "ConnectionCheck", "description": "HeadBucket, ListObjectsV2(MaxKeys=1) per allowed prefix, GetBucketVersioning", "scopes": ["s3:ListBucket", "s3:GetBucketVersioning"], "mutates": false},
+    {"name": "discover", "capability": "ResourceDiscovery", "description": "The allowlisted prefixes as resources", "scopes": [], "mutates": false},
+    {"name": "sync_page", "capability": "RecordSync", "description": "object listing under one allowed prefix: ListObjectsV2 with ContinuationToken, or ListObjectVersions with delete markers as delete events when use_versions", "scopes": ["s3:ListBucket", "s3:ListBucketVersions"], "mutates": false},
+    {"name": "fetch_document", "capability": "DocumentFetch", "description": "HeadObject size check then GetObject (optional VersionId) under the size cap; keys outside allowed prefixes rejected", "scopes": ["s3:GetObject", "s3:GetObjectVersion"], "mutates": false}
+  ],
+  "resource_types": ["prefix", "object"],
+  "rate_policy": {"requests_per_minute": null, "concurrency": 4, "honour_retry_after": true, "max_attempts": 5, "base_backoff_seconds": 1.0, "max_backoff_seconds": 60.0},
+  "raw_data_support": true,
+  "deletion_semantics": "full_crawl_reconcile",
+  "acl_coverage": "container",
+  "owner": "platform-team",
+  "limitations": [
+    "Verified only against botocore stubbed responses; no AWS account or bucket was available (an emulator would not count as AWS verification either)",
+    "Object ACLs and bucket policies are not read; access is decided by the connection's bucket/prefix grant",
+    "S3 event notifications are not consumed; change detection is listing-based (plus delete markers when use_versions)",
+    "Objects larger than max_object_bytes are refused, not partially read; no multipart/range download",
+    "SSE-KMS objects need kms:Decrypt on the connection identity; not tested"
+  ],
+  "verification_level": "fixture_tested",
+  "docs_contract": "docs/provider-contracts/aws-s3.md"
+}

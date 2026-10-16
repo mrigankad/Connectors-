@@ -36,8 +36,8 @@
     },
     {
       "catalog_id": "WCN-119",
-      "connector_id": null,
-      "status": "candidate",
+      "connector_id": "aws.s3",
+      "status": "fixture_tested",
       "owner": "platform-team"
     },
     {

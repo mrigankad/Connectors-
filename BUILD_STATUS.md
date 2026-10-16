@@ -1,6 +1,52 @@
 # BUILD_STATUS
 
-Last session: 2026-10-16 (session 2). Read this before resuming. Session 1 notes follow the session 2 block.
+Last session: 2026-10-16 (session 3). Read this before resuming. Earlier session notes follow the session 3 block.
+
+## Session 3: completed scopes
+
+* **Worker sync engine** (`worker/handlers.py`): `record_sync` drives any RecordSync adapter page by page through
+  `RecordStore.commit_page` (cursor from `checkpoint`, reset on cursor-version change; lease heartbeat per page;
+  `resume=True` re-enqueues the partition when the page budget is spent; `CursorExpiredError` quarantined as an
+  explicit resync). Full crawls record `crawl_seen` marks in the page transaction (migration `0003`); deletions are
+  inferred only after a complete crawl and only for `full_crawl_reconcile` sources; abandoned crawl marks are swept.
+  `webhook_process` turns inbox rows into envelopes and ignores states older than the stored version (out-of-order).
+  Tenant-scoped claims (`JobQueue.claim(tenant_id=...)`) for dedicated worker pools and isolated tests.
+* **API**: `POST /connections/{id}/sync` enqueues a `record_sync` job; webhook receipt enqueues `webhook_process`.
+* **`aws.s3` adapter** (WCN-119) on boto3 1.43.114: allowlisted bucket/prefixes, ListObjectsV2 cursors,
+  ListObjectVersions with delete markers as delete events, HeadObject/GetObject with size cap, STS assume-role and
+  ambient auth modes, error classification; knowledge.document mapping `knowledge.s3/1`. Fixture-tested on
+  botocore `Stubber` only (no AWS account).
+* **Chakram lineage through the engine**: the real `github.repositories` adapter bound to captured fixtures syncs
+  repository, commits and PRs into engineering records via worker jobs (`test_chakram_lineage_commits_and_runs_through_the_engine`).
+
+## Session 3: tests and results
+
+```
+ruff check / format --check                 -> clean
+mypy                                        -> Success: no issues found in 67 source files
+validate-manifests / validate-catalog       -> 7 connectors, catalog OK
+pytest -q (offline lane)                    -> 109 passed, 3 skipped (live tests without credentials)
+```
+Acceptance scenarios newly covered: T-12 (expired cursor -> controlled resync), T-13 (replay counts), T-14 (partial
+crawl never deletes), T-15 (complete crawl infers deletion; event sources never infer), T-16/T-17 (page failure leaves
+checkpoint untouched; replay idempotent), T-19 (cancel continuation), T-26 (out-of-order update/delete), S3 prefix
+policy and pagination checks.
+
+## Session 3: unresolved blockers
+
+1. S3 has no live evidence (no AWS credentials/bucket). Needs `WAYAM_LIVE_S3_*` and a live test file (not written yet).
+2. Same network blockers as session 2 for docs, Graph, Jira, Vercel; GitHub log storage origin still denied.
+3. `webhook_process` relies on `source_timestamp`/`source_version` ordering; providers whose events carry neither
+   (push commits) are applied in delivery order only.
+
+## Session 3: next runnable steps
+
+1. `make test`; `WAYAM_LIVE_GITHUB=1 ... make test-live`.
+2. Live S3 test file behind `WAYAM_LIVE_S3_BUCKET`/credentials (mirror the GitHub live pattern), then a knowledge
+   pipeline job: S3 object -> fetch_document -> files.docx/pptx parse -> knowledge.fragment commit (Bodham ingest).
+3. Microsoft Graph transport + SharePoint/OneDrive once graph.microsoft.com is reachable and a tenant exists;
+   Jira Cloud and Vercel likewise; SQL Server once an instance is available.
+4. OpenTelemetry instrumentation of Store/JobQueue/ProviderHttp.
 
 ## Session 2: completed scopes
 

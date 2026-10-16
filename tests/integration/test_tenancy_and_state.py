@@ -186,7 +186,7 @@ def test_job_lifecycle(store, tenant_a, tenant_b):
     j2 = q.enqueue(tenant_b.tenant_id, cb, Product.BODHAM, job_type="sync", resource_type="rows")
     assert q.get(tenant_b.tenant_id, j1) is None  # other tenant cannot see it
 
-    leased = q.claim("w1")
+    leased = q.claim("w1", tenant_id=tenant_a.tenant_id)
     assert leased is not None and leased.id == j1 and leased.attempts == 1
     assert leased.grant(["RecordSync"]).tenant_id == tenant_a.tenant_id
     assert q.heartbeat(leased)
@@ -197,9 +197,9 @@ def test_job_lifecycle(store, tenant_a, tenant_b):
     import time
 
     time.sleep(0.05)
-    claimed = {q.claim("w2").id, q.claim("w2").id}
+    claimed = {q.claim("w2", tenant_id=tenant_a.tenant_id).id, q.claim("w2", tenant_id=tenant_b.tenant_id).id}
     assert claimed == {j1, j2}
-    assert q.claim("w3") is None
+    assert q.claim("w3", tenant_id=tenant_a.tenant_id) is None and q.claim("w3", tenant_id=tenant_b.tenant_id) is None
     leased_again = next(j for j in [q.get(tenant_a.tenant_id, j1)] if j)
     assert leased_again["attempts"] == 2
     # rebuild LeasedJob for j1 via the queue table lease token
@@ -234,7 +234,7 @@ def test_auth_failure_blocks_connection_without_retry(store, tenant_a):
     ca = _connection(store, tenant_a)
     q = JobQueue(store)
     jid = q.enqueue(tenant_a.tenant_id, ca, Product.SAMYAK, job_type="sync", resource_type="t")
-    leased = q.claim("w")
+    leased = q.claim("w", tenant_id=tenant_a.tenant_id)
     assert leased.id == jid
     assert q.fail(leased, AuthError("token revoked", details={"token": "ghp_shouldnotappear1234567890abcdefgh"})) == "failed"
     st = q.get(tenant_a.tenant_id, jid)
@@ -246,9 +246,9 @@ def test_expired_lease_is_reclaimed_and_concurrent_claims_are_exclusive(store, t
     ca = _connection(store, tenant_a)
     q = JobQueue(store, lease_seconds=0)
     jid = q.enqueue(tenant_a.tenant_id, ca, Product.SAMYAK, job_type="sync", resource_type="t", max_attempts=10)
-    first = q.claim("crashed-worker")
+    first = q.claim("crashed-worker", tenant_id=tenant_a.tenant_id)
     assert first.id == jid
-    second = q.claim("new-worker")  # lease already expired (0s) -> reclaimed by another worker
+    second = q.claim("new-worker", tenant_id=tenant_a.tenant_id)  # lease already expired (0s) -> reclaimed by another worker
     assert second is not None and second.id == jid and second.lease_token != first.lease_token
     assert not q.complete(first, {})  # the crashed worker's token no longer works
     assert q.complete(second, {"ok": True, "token": "x"})
@@ -262,7 +262,7 @@ def test_expired_lease_is_reclaimed_and_concurrent_claims_are_exclusive(store, t
 
     def worker(name: str) -> None:
         while True:
-            j = q2.claim(name)
+            j = q2.claim(name, tenant_id=tenant_a.tenant_id)
             if j is None:
                 return
             with lock:

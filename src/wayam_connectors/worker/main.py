@@ -11,6 +11,7 @@ import logging
 import time
 from collections.abc import Callable
 from typing import Any
+from uuid import UUID
 
 from wayam_connectors.contracts.errors import ConnectorError
 from wayam_connectors.contracts.identity import JobGrant
@@ -23,9 +24,9 @@ log = logging.getLogger("wayam.worker")
 Handler = Callable[[Runtime, LeasedJob, JobGrant], dict[str, Any]]
 
 
-def run_once(rt: Runtime, handlers: dict[str, Handler], worker_id: str) -> str | None:
+def run_once(rt: Runtime, handlers: dict[str, Handler], worker_id: str, *, tenant_id: UUID | None = None) -> str | None:
     """Claim and run one job. Returns the job's final status or None when the queue is empty."""
-    job = rt.jobs.claim(worker_id)
+    job = rt.jobs.claim(worker_id, tenant_id=tenant_id)
     if job is None:
         return None
     handler = handlers.get(job.job_type)
@@ -46,6 +47,22 @@ def run_once(rt: Runtime, handlers: dict[str, Handler], worker_id: str) -> str |
     if not rt.jobs.complete(job, result):
         log.warning("job %s: lease lost before completion; result discarded (will re-run)", job.id)
         return "lease_lost"
+    if result.get("resume"):
+        # page budget spent before the source reported completion: continue from the checkpoint in a new job
+        payload = dict(job.payload)
+        if result.get("crawl_id"):
+            payload["crawl_id"] = result["crawl_id"]
+        rt.jobs.enqueue(
+            job.tenant_id,
+            job.connection_id,
+            job.product,
+            job_type=job.job_type,
+            resource_type=job.resource_type,
+            resource_id=job.resource_id,
+            payload=payload,
+            max_attempts=job.max_attempts,
+        )
+        return "resumed"
     return "succeeded"
 
 
@@ -78,4 +95,10 @@ def connection_check_handler(rt: Runtime, job: LeasedJob, grant: JobGrant) -> di
     return dict(result.model_dump(mode="json"))
 
 
-DEFAULT_HANDLERS: dict[str, Handler] = {"connection_check": connection_check_handler}
+def _default_handlers() -> dict[str, Handler]:
+    from .handlers import record_sync, webhook_process
+
+    return {"connection_check": connection_check_handler, "record_sync": record_sync, "webhook_process": webhook_process}
+
+
+DEFAULT_HANDLERS: dict[str, Handler] = _default_handlers()

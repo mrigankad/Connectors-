@@ -92,6 +92,10 @@ class WayamConnectorsClient:
         """Quarantine: GET /connections/{connection_id}/quarantine"""
         return self._call('GET', f'/connections/{connection_id}/quarantine', params=None)
 
+    def start_sync_connections_connection_id_sync(self, connection_id: str, body: dict[str, Any]) -> Any:
+        """Start Sync: POST /connections/{connection_id}/sync"""
+        return self._call('POST', f'/connections/{connection_id}/sync', params=None, json=body)
+
     def jobs_connections_connection_id_jobs(self, connection_id: str) -> Any:
         """Jobs: GET /connections/{connection_id}/jobs"""
         return self._call('GET', f'/connections/{connection_id}/jobs', params=None)

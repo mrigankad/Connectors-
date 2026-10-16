@@ -28,6 +28,7 @@ Docker Compose for API + worker + database: `cp infra/.env.example infra/.env &&
 | `files.pptx` (WCN-286) | FileParser | fixture_tested |
 | `github.repositories` (WCN-097) | ConnectionCheck, ResourceDiscovery, RecordSync, WebhookReceiver | sandbox_verified (live read on mrigankad/Chakram) |
 | `github.actions` (WCN-099) | ConnectionCheck, RecordSync, DocumentFetch | sandbox_verified (logs fixture-only) |
+| `aws.s3` (WCN-119) | ConnectionCheck, ResourceDiscovery, RecordSync, DocumentFetch | fixture_tested (botocore stubs) |
 
 Everything else in the 294-entry catalog is `candidate` and has no code. See `docs/architecture.md`,
 `docs/decisions/`, `docs/provider-contracts/` and `docs/credential-matrix.md`.
@@ -43,5 +44,5 @@ Everything else in the 294-entry catalog is `candidate` and has no code. See `do
 | `wayam-connectors export-openapi` | write `packages/contracts/openapi.json` (SDK generation input) |
 | `python scripts/generate_sdks.py [--python-only]` | regenerate `packages/sdk-python` and `packages/sdk-typescript` from the OpenAPI contract |
 | `WAYAM_LIVE_GITHUB=1 WAYAM_LIVE_GITHUB_TOKEN=... make test-live` | live GitHub verification against `WAYAM_LIVE_GITHUB_REPO` (default mrigankad/Chakram) |
-| `wayam-connectors serve` / `worker` | run the control API / the job worker |
+| `wayam-connectors serve` / `worker` | run the control API / the job worker (`record_sync`, `webhook_process`, `connection_check` handlers) |
 | `make test-live` | opt-in live tests; blocked (not faked) without credentials |

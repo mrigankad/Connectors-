@@ -96,8 +96,11 @@ class JobQueue:
 
     # ------------------------------------------------------------ workers
 
-    def claim(self, worker_id: str) -> LeasedJob | None:
-        """Claim one runnable job across tenants (expired leases are reclaimed). SKIP LOCKED makes this safe for many workers."""
+    def claim(self, worker_id: str, *, tenant_id: UUID | None = None) -> LeasedJob | None:
+        """Claim one runnable job (expired leases are reclaimed). SKIP LOCKED makes this safe for many workers.
+
+        Without `tenant_id` the worker serves every tenant; with it, only that tenant's partition (dedicated worker pools).
+        """
         token = uuid.uuid4()
         until = datetime.now(UTC) + timedelta(seconds=self.lease_seconds)
         with self.store.bypass_tx("worker_claim") as cur:
@@ -107,6 +110,7 @@ class JobQueue:
                     SELECT id FROM sync_job
                     WHERE run_after <= now() AND cancel_requested = false
                       AND (status = 'queued' OR (status = 'leased' AND leased_until < now()))
+                      AND (%s::uuid IS NULL OR tenant_id = %s::uuid)
                     ORDER BY run_after
                     FOR UPDATE SKIP LOCKED
                     LIMIT 1
@@ -117,7 +121,7 @@ class JobQueue:
                 RETURNING j.id, j.tenant_id, j.connection_id, j.product, j.job_type, j.resource_type, j.resource_id,
                           j.payload, j.attempts, j.max_attempts
                 """,
-                (token, worker_id, until),
+                (tenant_id, tenant_id, token, worker_id, until),
             )
             row = cur.fetchone()
         if row is None:

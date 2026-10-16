@@ -52,6 +52,17 @@ products / SDKs ──► control API (FastAPI)  ──► registry (manifests, 
 * Webhooks: signature verified over the raw bytes before anything is stored; durable insert; duplicates
   acknowledged but not stored twice; headers redacted at rest.
 
+## Sync engine (worker)
+
+* `record_sync` job: cursor from `checkpoint` (reset when the adapter's cursor version changed), one atomic
+  `commit_page` per source page, lease heartbeat between pages, `resume=True` + re-enqueue when the page budget
+  runs out, `CursorExpiredError` recorded in quarantine and surfaced as an explicit resync.
+* Full crawls mark seen objects in `crawl_seen` inside the page transaction; deletions are inferred only when the
+  crawl completes and only for `deletion_semantics=full_crawl_reconcile`; abandoned crawls are swept after 7 days
+  and never drive deletes.
+* `webhook_process` job: inbox rows -> `envelopes_from_delivery` -> drop states older than the stored version of
+  the same object (out-of-order deliveries) -> commit per delivery -> mark processed/rejected.
+
 ## Security
 
 * Untrusted bytes go through `platform/security/files.py` (size, member count, traversal, compression ratio,

@@ -158,13 +158,13 @@ def test_worker_runs_connection_check_job(client, tenants, tenant_a):
     from wayam_connectors.contracts.identity import Product
 
     jid = rt.jobs.enqueue(tenant_a.tenant_id, UUID(cid), Product.PLATFORM, job_type="connection_check", resource_type="connection")
-    assert run_once(rt, DEFAULT_HANDLERS, "test-worker") == "succeeded"
+    assert run_once(rt, DEFAULT_HANDLERS, "test-worker", tenant_id=tenant_a.tenant_id) == "succeeded"
     job = c.get(f"/jobs/{jid}", headers=_h(admin)).json()
     assert job["status"] == "succeeded" and job["result"]["ok"] is False and "read-only role" in job["result"]["detail"]
     assert c.get(f"/connections/{cid}", headers=_h(admin)).json()["status"] == "blocked"
-    assert run_once(rt, DEFAULT_HANDLERS, "test-worker") is None
+    assert run_once(rt, DEFAULT_HANDLERS, "test-worker", tenant_id=tenant_a.tenant_id) is None
     jid2 = rt.jobs.enqueue(tenant_a.tenant_id, UUID(cid), Product.PLATFORM, job_type="unknown_type", resource_type="x")
-    assert run_once(rt, {}, "w") == "failed"
+    assert run_once(rt, {}, "w", tenant_id=tenant_a.tenant_id) == "failed"
     assert c.get(f"/jobs/{jid2}", headers=_h(admin)).json()["last_error"]["message"].startswith("no handler")
 
 

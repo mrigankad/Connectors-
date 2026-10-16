@@ -66,9 +66,18 @@ class RecordStore:
         job_id: UUID | None = None,
         outbox_topic: str | None = "records.committed",
         mark_success: bool = False,
+        crawl_id: UUID | None = None,
+        seen: list[tuple[str, str]] | None = None,
     ) -> CommitStats:
+        """`seen` = (object_type, object_id) pairs observed on this page of a full crawl, recorded in the same transaction."""
         stats = CommitStats()
         with self.store.tenant_tx(tenant_id) as cur:
+            for otype, oid in seen or []:
+                cur.execute(
+                    "INSERT INTO crawl_seen (tenant_id, connection_id, crawl_id, source_object_type, source_object_id) "
+                    "VALUES (%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING",
+                    (tenant_id, connection_id, crawl_id, otype, oid),
+                )
             for env in envelopes:
                 if env.tenant_id != tenant_id or env.connection_id != connection_id:
                     raise ConnectorError("envelope tenant/connection does not match the committing job")
@@ -177,6 +186,48 @@ class RecordStore:
                 )
                 stats.outbox_events += 1
         return stats
+
+    def current_versions(
+        self, tenant_id: UUID, connection_id: UUID, source_object_type: str, object_ids: list[str]
+    ) -> dict[str, dict[str, Any]]:
+        """Current (latest stored) version per object id, including delete markers."""
+        if not object_ids:
+            return {}
+        with self.store.tenant_tx(tenant_id) as cur:
+            cur.execute(
+                "SELECT source_object_id, source_version, event_id, operation, source_timestamp FROM normalized_record "
+                "WHERE tenant_id=%s AND connection_id=%s AND source_object_type=%s AND is_current AND source_object_id = ANY(%s)",
+                (tenant_id, connection_id, source_object_type, object_ids),
+            )
+            return {r["source_object_id"]: dict(r) for r in cur.fetchall()}
+
+    def unseen_current(self, tenant_id: UUID, connection_id: UUID, crawl_id: UUID, source_object_type: str) -> list[str]:
+        """Objects that are current and not marked seen by the given crawl: candidates for inferred deletion."""
+        with self.store.tenant_tx(tenant_id) as cur:
+            cur.execute(
+                "SELECT r.source_object_id FROM normalized_record r WHERE r.tenant_id=%s AND r.connection_id=%s "
+                "AND r.source_object_type=%s AND r.is_current AND r.operation <> 'delete' AND NOT EXISTS ("
+                "  SELECT 1 FROM crawl_seen s WHERE s.tenant_id=r.tenant_id AND s.connection_id=r.connection_id AND s.crawl_id=%s "
+                "  AND s.source_object_type=r.source_object_type AND s.source_object_id=r.source_object_id) ORDER BY 1",
+                (tenant_id, connection_id, source_object_type, crawl_id),
+            )
+            return [r["source_object_id"] for r in cur.fetchall()]
+
+    def clear_stale_crawls(self, tenant_id: UUID, connection_id: UUID, *, older_than_days: int = 7) -> int:
+        """Marks left by abandoned crawls (cancelled/dead-lettered continuations) are swept, never used for deletes."""
+        with self.store.tenant_tx(tenant_id) as cur:
+            cur.execute(
+                "DELETE FROM crawl_seen WHERE tenant_id=%s AND connection_id=%s AND seen_at < now() - make_interval(days => %s)",
+                (tenant_id, connection_id, older_than_days),
+            )
+            return cur.rowcount
+
+    def clear_crawl(self, tenant_id: UUID, connection_id: UUID, crawl_id: UUID) -> int:
+        with self.store.tenant_tx(tenant_id) as cur:
+            cur.execute(
+                "DELETE FROM crawl_seen WHERE tenant_id=%s AND connection_id=%s AND crawl_id=%s", (tenant_id, connection_id, crawl_id)
+            )
+            return cur.rowcount
 
     def get_checkpoint(self, tenant_id: UUID, connection_id: UUID, resource_type: str, resource_id: str | None) -> dict[str, Any] | None:
         with self.store.tenant_tx(tenant_id) as cur:

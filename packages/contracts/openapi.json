@@ -905,6 +905,74 @@
         }
       }
     },
+    "/connections/{connection_id}/sync": {
+      "post": {
+        "summary": "Start Sync",
+        "operationId": "start_sync_connections__connection_id__sync_post",
+        "parameters": [
+          {
+            "name": "connection_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Connection Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Start Sync Connections  Connection Id  Sync Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/connections/{connection_id}/jobs": {
       "get": {
         "summary": "Jobs",
@@ -1362,6 +1430,56 @@
           "sql"
         ],
         "title": "QueryBody"
+      },
+      "SyncBody": {
+        "properties": {
+          "resource_type": {
+            "type": "string",
+            "title": "Resource Type"
+          },
+          "resource_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resource Id"
+          },
+          "page_size": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 1.0,
+            "title": "Page Size",
+            "default": 100
+          },
+          "overlap_seconds": {
+            "type": "integer",
+            "maximum": 86400.0,
+            "minimum": 0.0,
+            "title": "Overlap Seconds",
+            "default": 0
+          },
+          "max_pages": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 1.0,
+            "title": "Max Pages",
+            "default": 20
+          },
+          "full_crawl": {
+            "type": "boolean",
+            "title": "Full Crawl",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "resource_type"
+        ],
+        "title": "SyncBody"
       },
       "ValidationError": {
         "properties": {

@@ -224,7 +224,17 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
             context=AdapterContext(tenant_id=tenant_id, connection_id=connection_id, product=Product(conn.get("product") or "platform")),
         )
         body = await request.body()
-        return r.webhooks.receive(tenant_id, connection_id, receiver, headers=dict(request.headers), body=body, secret=hook_secret.encode())
+        result = r.webhooks.receive(
+            tenant_id, connection_id, receiver, headers=dict(request.headers), body=body, secret=hook_secret.encode()
+        )
+        if not result["duplicate"]:
+            try:  # one processing job per connection inbox; an active one will pick the new row up
+                r.jobs.enqueue(
+                    tenant_id, connection_id, Product(conn.get("product") or "platform"), job_type="webhook_process", resource_type="inbox"
+                )
+            except ValidationError:
+                pass
+        return result
 
     @app.get("/connections/{connection_id}/records")
     def records(
@@ -246,6 +256,29 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
     def quarantine(ctx: Ctx, connection_id: UUID) -> list[dict[str, Any]]:
         rt().connections.get(ctx, connection_id)
         return [_json(x) for x in rt().records.quarantined(ctx.tenant_id, connection_id)]
+
+    class SyncBody(BaseModel):
+        resource_type: str
+        resource_id: str | None = None
+        page_size: int = Field(default=100, ge=1, le=1000)
+        overlap_seconds: int = Field(default=0, ge=0, le=86400)
+        max_pages: int = Field(default=20, ge=1, le=1000)
+        full_crawl: bool = False
+
+    @app.post("/connections/{connection_id}/sync", status_code=202)
+    def start_sync(ctx: Ctx, connection_id: UUID, body: SyncBody) -> dict[str, Any]:
+        r = rt()
+        r.grants.require(ctx, connection_id, Capability.RECORD_SYNC.value)
+        jid = r.jobs.enqueue(
+            ctx.tenant_id,
+            connection_id,
+            ctx.product,
+            job_type="record_sync",
+            resource_type=body.resource_type,
+            resource_id=body.resource_id,
+            payload=body.model_dump(),
+        )
+        return {"job_id": str(jid), "status": "queued"}
 
     @app.get("/connections/{connection_id}/jobs")
     def jobs(ctx: Ctx, connection_id: UUID) -> list[dict[str, Any]]:

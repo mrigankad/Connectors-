@@ -75,6 +75,19 @@ nothing is readable. `GET /connections/{id}/knowledge?principal=` returns only f
 Connection config has a reserved `_platform` section for product-side settings; it is stripped before the adapter
 sees the config, so adapter schemas stay strict.
 
+## Scheduling, status and lineage
+
+* `sync_schedule` rows (per connection partition, interval >= 60 s) are enqueued by `Scheduler.tick`, which runs
+  inside the worker loop every 30 s and from any number of workers (SKIP LOCKED). A partition with an active job or
+  a non-active connection is skipped to its next slot; nothing piles up.
+* `GET /connections/{id}/status` computes freshness and lag per partition from `checkpoint.last_success_at`, job
+  counts by status, the last five failures with their error class, quarantine counts by reason, webhook inbox
+  counts, current/deleted record counts per type and the age of the oldest ACL evidence. `evaluated=false` when
+  nothing has been synced; no number is invented.
+* `GET /lineage/commits/{sha}` joins stored engineering records on immutable ids: commit -> pull requests
+  (`head_sha`) -> workflow runs (`head_sha`) with their jobs -> deployments (`commit_sha`, reported as "not evaluated"
+  until a deployment source such as Vercel is connected). Limited to connections the calling product holds grants on.
+
 ## Observability
 
 OpenTelemetry spans (`platform/telemetry.py`, API only; no-op without an SDK): `provider.http` (method, host, path,

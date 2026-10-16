@@ -84,9 +84,12 @@ class Fake:
         if p == "/repos/mrigankad/Chakram/actions/runs":
             return httpx.Response(200, json=_load("runs.json"), headers=_headers("runs.headers"))
         if p == "/repositories/1422286600/actions/runs":
-            return httpx.Response(200, json={"total_count": 7, "workflow_runs": []})
+            # page 2 (Link rel=next form): the captured run for the main-branch commit 3c2dbb4 (runs_main.json)
+            return httpx.Response(200, json={**_load("runs_main.json"), "total_count": 7})
         if p == "/repos/mrigankad/Chakram/actions/runs/38933603434/jobs":
             return httpx.Response(200, json=_load("jobs.json"))
+        if p == f"/repos/mrigankad/Chakram/actions/runs/{_load('runs_main.json')['workflow_runs'][0]['id']}/jobs":
+            return httpx.Response(200, json=_load("jobs_main.json"))
         if p == "/repos/mrigankad/Chakram/actions/runs/38933603434/artifacts":
             return httpx.Response(200, json=_load("artifacts.json"))
         if p == "/repos/mrigankad/Chakram/actions/workflows":

@@ -20,9 +20,12 @@ from .db import Store
 from .file_import import FileImportService
 from .jobs import JobQueue
 from .knowledge_access import KnowledgeAccessService
+from .lineage import LineageService
 from .raw_store import LocalEncryptedRawStore
 from .records import RecordStore
 from .registry import ConnectorEntry, load_registry
+from .scheduler import Scheduler
+from .status import StatusService
 from .tenancy import GrantService, TenantService
 from .webhooks import WebhookInbox
 
@@ -45,6 +48,9 @@ class Runtime:
     webhooks: WebhookInbox
     file_import: FileImportService
     knowledge: KnowledgeAccessService
+    scheduler: Scheduler
+    status: StatusService
+    lineage: LineageService
 
     def adapter_for(
         self, entry: ConnectorEntry, config: dict[str, Any] | None, secret: dict[str, Any] | None, context: AdapterContext | None = None
@@ -70,6 +76,8 @@ def build_runtime(settings: Settings | None = None, *, dsn: str | None = None, r
     registry = load_registry()
     grants = GrantService(store)
     records = RecordStore(store)
+    connections = ConnectionService(store)
+    jobs = JobQueue(store, lease_seconds=settings.job_lease_seconds)
     raw = LocalEncryptedRawStore(raw_root or Path(".wayam-raw"), backend)
     return Runtime(
         settings=settings,
@@ -77,13 +85,16 @@ def build_runtime(settings: Settings | None = None, *, dsn: str | None = None, r
         registry=registry,
         tenants=TenantService(store),
         grants=grants,
-        connections=ConnectionService(store),
+        connections=connections,
         credentials=CredentialStore(store, backend),
         records=records,
-        jobs=JobQueue(store, lease_seconds=settings.job_lease_seconds),
+        jobs=jobs,
         webhooks=WebhookInbox(store),
         file_import=FileImportService(registry, grants, records, raw),
         knowledge=KnowledgeAccessService(store, grants),
+        scheduler=Scheduler(store, jobs, grants),
+        status=StatusService(store, connections),
+        lineage=LineageService(store, connections),
     )
 
 

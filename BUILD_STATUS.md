@@ -1,6 +1,41 @@
 # BUILD_STATUS
 
-Last session: 2026-10-16 (session 4). Read this before resuming. Earlier session notes follow the session 4 block.
+Last session: 2026-10-16 (session 5). Read this before resuming. Earlier session notes follow the session 5 block.
+
+## Session 5: completed scopes
+
+* **Scheduler** (`platform/scheduler.py`, migration `0004_schedules.sql`): per-partition recurring schedules with
+  grant checks at creation, `tick()` safe across workers (SKIP LOCKED), skip-not-pile-up for active partitions and
+  non-active connections, enable/disable; the worker loop ticks every 30 s. API: `POST/GET /connections/{id}/schedules`,
+  `POST /schedules/{id}/enable`.
+* **Connection status** (`platform/status.py`, `GET /connections/{id}/status`): lag/freshness per partition,
+  job counts, recent failures with error class, quarantine reasons, webhook inbox counts, record counts, ACL
+  evidence age; `evaluated=false` when nothing was synced.
+* **Chakram lineage** (`platform/lineage.py`, `GET /lineage/commits/{sha}`): commit -> PRs -> workflow runs + jobs
+  -> deployments over stored records, scoped to connections the product holds grants on; deployments reported as
+  not evaluated until a deployment source exists. Verified on captured GitHub data: commit 3c2dbb4 (main HEAD) ->
+  run 38918456757 with 3 jobs (`fixtures/github/runs_main.json`, `jobs_main.json`, captured live 2026-10-16).
+
+## Session 5: tests and results
+
+```
+ruff check / format --check                 -> clean
+mypy                                        -> Success: no issues found in 72 source files
+validate-manifests / validate-catalog       -> 7 connectors, catalog OK
+pytest -q (offline lane)                    -> 114 passed, 4 skipped (live tests BLOCKED without credentials)
+```
+Acceptance coverage added: Chakram repository -> CI lineage (T-48 part 3, fixture level; preview/deployment leg
+blocked until Vercel is reachable), freshness/lag/partial-failure exposure, duplicate-schedule prevention.
+
+## Session 5: next runnable steps
+
+1. `make test`.
+2. Vercel adapter (deployments, preview state) when api.vercel.com is reachable or credentials exist; it completes the
+   lineage chain (`engineering.deployment` with `commit_sha`).
+3. Microsoft Graph transport + SharePoint/OneDrive (PermissionSync feeding `source_principal`/`source_acl`), Jira Cloud,
+   SQL Server, as access appears. Each follows the GitHub pattern: core, surfaces, captured fixtures, live lane.
+4. Operational: outbox publisher (product SDK callbacks), retention/deletion propagation job for raw evidence and
+   fragments beyond policy, Azure Key Vault backend.
 
 ## Session 4: completed scopes
 

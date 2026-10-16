@@ -104,6 +104,26 @@ class WayamConnectorsClient:
         """Knowledge: GET /connections/{connection_id}/knowledge"""
         return self._call('GET', f'/connections/{connection_id}/knowledge', params={'principal': principal, 'limit': limit})
 
+    def create_schedule_connections_connection_id_schedules(self, connection_id: str, body: dict[str, Any]) -> Any:
+        """Create Schedule: POST /connections/{connection_id}/schedules"""
+        return self._call('POST', f'/connections/{connection_id}/schedules', params=None, json=body)
+
+    def list_schedules_connections_connection_id_schedules(self, connection_id: str) -> Any:
+        """List Schedules: GET /connections/{connection_id}/schedules"""
+        return self._call('GET', f'/connections/{connection_id}/schedules', params=None)
+
+    def enable_schedule_schedules_schedule_id_enable(self, schedule_id: str, enabled: Any = None) -> Any:
+        """Enable Schedule: POST /schedules/{schedule_id}/enable"""
+        return self._call('POST', f'/schedules/{schedule_id}/enable', params={'enabled': enabled})
+
+    def connection_status_connections_connection_id_status(self, connection_id: str) -> Any:
+        """Connection Status: GET /connections/{connection_id}/status"""
+        return self._call('GET', f'/connections/{connection_id}/status', params=None)
+
+    def lineage_lineage_commits_sha(self, sha: str) -> Any:
+        """Lineage: GET /lineage/commits/{sha}"""
+        return self._call('GET', f'/lineage/commits/{sha}', params=None)
+
     def jobs_connections_connection_id_jobs(self, connection_id: str) -> Any:
         """Jobs: GET /connections/{connection_id}/jobs"""
         return self._call('GET', f'/connections/{connection_id}/jobs', params=None)

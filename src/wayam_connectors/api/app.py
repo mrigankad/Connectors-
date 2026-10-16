@@ -300,6 +300,50 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
         """Fragments the given Wayam principal may read, after source ACL, freshness and connection checks."""
         return rt().knowledge.visible_fragments(ctx, connection_id, wayam_principal=principal, limit=min(limit, 1000))
 
+    class ScheduleBody(BaseModel):
+        job_type: str
+        resource_type: str
+        resource_id: str | None = None
+        interval_seconds: int = Field(ge=60, le=7 * 86400)
+        payload: dict[str, Any] = Field(default_factory=dict)
+        product: Product | None = None
+
+    @app.post("/connections/{connection_id}/schedules", status_code=201)
+    def create_schedule(ctx: Ctx, connection_id: UUID, body: ScheduleBody) -> dict[str, Any]:
+        rt().connections.get(ctx, connection_id)
+        sid = rt().scheduler.create(
+            ctx,
+            connection_id,
+            job_type=body.job_type,
+            resource_type=body.resource_type,
+            resource_id=body.resource_id,
+            interval_seconds=body.interval_seconds,
+            payload=body.payload,
+            product=body.product,
+        )
+        return {"id": str(sid)}
+
+    @app.get("/connections/{connection_id}/schedules")
+    def list_schedules(ctx: Ctx, connection_id: UUID) -> list[dict[str, Any]]:
+        rt().connections.get(ctx, connection_id)
+        return [_json(s) for s in rt().scheduler.list(ctx, connection_id)]
+
+    @app.post("/schedules/{schedule_id}/enable")
+    def enable_schedule(ctx: Ctx, schedule_id: UUID, enabled: bool = True) -> dict[str, Any]:
+        return {"updated": rt().scheduler.set_enabled(ctx, schedule_id, enabled)}
+
+    @app.get("/connections/{connection_id}/status")
+    def connection_status(ctx: Ctx, connection_id: UUID) -> dict[str, Any]:
+        """Freshness, lag, counts and recent failure reasons computed from stored state only."""
+        return rt().status.connection_status(ctx, connection_id)
+
+    @app.get("/lineage/commits/{sha}")
+    def lineage(ctx: Ctx, sha: str) -> dict[str, Any]:
+        """Chakram lineage: commit -> pull requests -> workflow runs/jobs -> deployments, over records this product may read."""
+        r = rt()
+        allowed = [UUID(str(c["id"])) for c in r.connections.list(ctx) if _has_grant(r, ctx, UUID(str(c["id"])))]
+        return r.lineage.for_commit(ctx, sha, connection_ids=allowed or [UUID(int=0)])
+
     @app.get("/connections/{connection_id}/jobs")
     def jobs(ctx: Ctx, connection_id: UUID) -> list[dict[str, Any]]:
         rt().connections.get(ctx, connection_id)
@@ -323,6 +367,16 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
         return {"replayed": rt().jobs.replay(ctx.tenant_id, job_id)}
 
     return app
+
+
+def _has_grant(r: Runtime, ctx: TenantContext, connection_id: UUID) -> bool:
+    for cap in (Capability.RECORD_SYNC, Capability.WEBHOOK_RECEIVER):
+        try:
+            r.grants.require(ctx, connection_id, cap.value)
+            return True
+        except ConnectorError:
+            continue
+    return False
 
 
 def _json(row: dict[str, Any]) -> dict[str, Any]:

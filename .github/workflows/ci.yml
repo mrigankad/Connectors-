@@ -33,7 +33,7 @@ jobs:
     env:
       WAYAM_TEST_DATABASE_URL: postgresql://wayam:wayam@127.0.0.1:5432/wayam_connectors_test
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
       - run: uv venv --python 3.12 .venv && uv pip install --python .venv/bin/python -e ".[dev]"
       - name: Lint
@@ -63,7 +63,7 @@ jobs:
     if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
       - run: uv venv --python 3.12 .venv && uv pip install --python .venv/bin/python -e ".[dev]"
       - name: GitHub live tests

@@ -96,6 +96,14 @@ class WayamConnectorsClient:
         """Start Sync: POST /connections/{connection_id}/sync"""
         return self._call('POST', f'/connections/{connection_id}/sync', params=None, json=body)
 
+    def start_ingest_connections_connection_id_ingest(self, connection_id: str, body: dict[str, Any]) -> Any:
+        """Start Ingest: POST /connections/{connection_id}/ingest"""
+        return self._call('POST', f'/connections/{connection_id}/ingest', params=None, json=body)
+
+    def knowledge_connections_connection_id_knowledge(self, connection_id: str, principal: Any = None, limit: Any = None) -> Any:
+        """Knowledge: GET /connections/{connection_id}/knowledge"""
+        return self._call('GET', f'/connections/{connection_id}/knowledge', params={'principal': principal, 'limit': limit})
+
     def jobs_connections_connection_id_jobs(self, connection_id: str) -> Any:
         """Jobs: GET /connections/{connection_id}/jobs"""
         return self._call('GET', f'/connections/{connection_id}/jobs', params=None)

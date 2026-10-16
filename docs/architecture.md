@@ -63,6 +63,25 @@ products / SDKs ──► control API (FastAPI)  ──► registry (manifests, 
 * `webhook_process` job: inbox rows -> `envelopes_from_delivery` -> drop states older than the stored version of
   the same object (out-of-order deliveries) -> commit per delivery -> mark processed/rejected.
 
+## Knowledge ingest (Bodham)
+
+`document_ingest` job: for each current `knowledge.document` of a DocumentFetch connection, fetch the bytes, pick the
+format adapter by name/MIME (`platform/parsers.py`, explicit table), commit fragments with the document's version,
+replace superseded fragments with delete records, delete fragments of deleted documents, quarantine unsupported or
+unparsable files, and write the document ACL. Sources with container-level ACLs (S3) grant every document to the
+principals in the connection's `_platform.knowledge_acl_principals` (or the job payload); with none configured,
+nothing is readable. `GET /connections/{id}/knowledge?principal=` returns only fragments the principal may read.
+
+Connection config has a reserved `_platform` section for product-side settings; it is stripped before the adapter
+sees the config, so adapter schemas stay strict.
+
+## Observability
+
+OpenTelemetry spans (`platform/telemetry.py`, API only; no-op without an SDK): `provider.http` (method, host, path,
+status), `jobs.claim`, `worker.job` (job/tenant/connection ids, type, attempt), `records.commit_page` (counts).
+Attributes come from an allowlist: no payloads, headers or secrets. `configure_console_exporter()` is the dev wiring;
+OTLP export is deployment configuration.
+
 ## Security
 
 * Untrusted bytes go through `platform/security/files.py` (size, member count, traversal, compression ratio,

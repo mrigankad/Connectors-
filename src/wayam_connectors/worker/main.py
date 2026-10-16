@@ -18,6 +18,7 @@ from wayam_connectors.contracts.identity import JobGrant
 from wayam_connectors.platform.jobs import LeasedJob
 from wayam_connectors.platform.runtime import Runtime
 from wayam_connectors.platform.security.redaction import redact
+from wayam_connectors.platform.telemetry import span
 
 log = logging.getLogger("wayam.worker")
 
@@ -35,7 +36,17 @@ def run_once(rt: Runtime, handlers: dict[str, Handler], worker_id: str, *, tenan
         return status
     grant = job.grant(list(job.payload.get("capabilities", [])))
     try:
-        result = handler(rt, job, grant)
+        with span(
+            "worker.job",
+            job_id=job.id,
+            job_type=job.job_type,
+            tenant_id=job.tenant_id,
+            connection_id=job.connection_id,
+            resource_type=job.resource_type,
+            attempt=job.attempts,
+            worker_id=worker_id,
+        ):
+            result = handler(rt, job, grant)
     except ConnectorError as exc:
         status = rt.jobs.fail(job, exc)
         log.warning("job %s failed (%s): %s", job.id, status, redact(exc.to_dict()))
@@ -96,9 +107,14 @@ def connection_check_handler(rt: Runtime, job: LeasedJob, grant: JobGrant) -> di
 
 
 def _default_handlers() -> dict[str, Handler]:
-    from .handlers import record_sync, webhook_process
+    from .handlers import document_ingest, record_sync, webhook_process
 
-    return {"connection_check": connection_check_handler, "record_sync": record_sync, "webhook_process": webhook_process}
+    return {
+        "connection_check": connection_check_handler,
+        "record_sync": record_sync,
+        "webhook_process": webhook_process,
+        "document_ingest": document_ingest,
+    }
 
 
 DEFAULT_HANDLERS: dict[str, Handler] = _default_handlers()

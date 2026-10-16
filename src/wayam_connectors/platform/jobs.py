@@ -15,6 +15,7 @@ from wayam_connectors.contracts.identity import JobGrant, Product
 from wayam_connectors.platform.security.redaction import redact
 
 from .db import Store
+from .telemetry import span
 
 TERMINAL = {"succeeded", "failed", "dead_letter", "cancelled"}
 
@@ -103,7 +104,7 @@ class JobQueue:
         """
         token = uuid.uuid4()
         until = datetime.now(UTC) + timedelta(seconds=self.lease_seconds)
-        with self.store.bypass_tx("worker_claim") as cur:
+        with span("jobs.claim", worker_id=worker_id, tenant_id=tenant_id), self.store.bypass_tx("worker_claim") as cur:
             cur.execute(
                 """
                 WITH candidate AS (

@@ -17,6 +17,7 @@ from email.utils import parsedate_to_datetime
 from typing import Any
 
 import httpx
+from opentelemetry import trace
 
 from wayam_connectors.contracts.errors import (
     AuthError,
@@ -30,6 +31,7 @@ from wayam_connectors.contracts.errors import (
 
 from .security.redaction import redact_headers, redact_text
 from .security.ssrf import OriginPolicy
+from .telemetry import span
 
 DEFAULT_TIMEOUT = httpx.Timeout(connect=5.0, read=30.0, write=30.0, pool=5.0)
 MAX_RESPONSE_BYTES = 25 * 1024 * 1024
@@ -139,6 +141,19 @@ class ProviderHttp:
         json: Any = None,
         allow_redirect_to: OriginPolicy | None = None,
     ) -> httpx.Response:
+        with span("provider.http", method=method.upper(), host=httpx.URL(url).host, path=httpx.URL(url).path):
+            return await self._request(method, url, params=params, headers=headers, json=json, allow_redirect_to=allow_redirect_to)
+
+    async def _request(
+        self,
+        method: str,
+        url: str,
+        *,
+        params: Mapping[str, Any] | None,
+        headers: Mapping[str, str] | None,
+        json: Any,
+        allow_redirect_to: OriginPolicy | None,
+    ) -> httpx.Response:
         resolve_dns = self.resolve_dns
         if method.upper() not in {"GET", "HEAD"} and json is None:
             # mutations go through ReviewedAction adapters that call `request` with an explicit json body;
@@ -175,6 +190,7 @@ class ProviderHttp:
         if len(resp.content) > self.max_response_bytes:
             raise PolicyError("response exceeds size limit", details={"bytes": len(resp.content)})
         self.last_rate_limit = {k: v for k, v in resp.headers.items() if k.lower().startswith("x-ratelimit")}
+        trace.get_current_span().set_attribute("http.status_code", resp.status_code)
         err = self.classifier(resp)
         if err is not None:
             err.details.setdefault("url", _safe_url(url))

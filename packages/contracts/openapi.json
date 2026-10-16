@@ -973,6 +973,155 @@
         }
       }
     },
+    "/connections/{connection_id}/ingest": {
+      "post": {
+        "summary": "Start Ingest",
+        "operationId": "start_ingest_connections__connection_id__ingest_post",
+        "parameters": [
+          {
+            "name": "connection_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Connection Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Start Ingest Connections  Connection Id  Ingest Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/connections/{connection_id}/knowledge": {
+      "get": {
+        "summary": "Knowledge",
+        "description": "Fragments the given Wayam principal may read, after source ACL, freshness and connection checks.",
+        "operationId": "knowledge_connections__connection_id__knowledge_get",
+        "parameters": [
+          {
+            "name": "connection_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Connection Id"
+            }
+          },
+          {
+            "name": "principal",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Principal"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 200,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Knowledge Connections  Connection Id  Knowledge Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/connections/{connection_id}/jobs": {
       "get": {
         "summary": "Jobs",
@@ -1372,6 +1521,27 @@
           "domain_mapping"
         ],
         "title": "ImportBody"
+      },
+      "IngestBody": {
+        "properties": {
+          "acl_principals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Acl Principals",
+            "description": "Source principals granted read on every document (container-ACL sources)"
+          },
+          "limit": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "default": 500
+          }
+        },
+        "type": "object",
+        "title": "IngestBody"
       },
       "Product": {
         "type": "string",

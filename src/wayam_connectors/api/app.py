@@ -280,6 +280,26 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
         )
         return {"job_id": str(jid), "status": "queued"}
 
+    class IngestBody(BaseModel):
+        acl_principals: list[str] = Field(
+            default_factory=list, description="Source principals granted read on every document (container-ACL sources)"
+        )
+        limit: int = Field(default=500, ge=1, le=10000)
+
+    @app.post("/connections/{connection_id}/ingest", status_code=202)
+    def start_ingest(ctx: Ctx, connection_id: UUID, body: IngestBody) -> dict[str, Any]:
+        r = rt()
+        r.grants.require(ctx, connection_id, Capability.DOCUMENT_FETCH.value)
+        jid = r.jobs.enqueue(
+            ctx.tenant_id, connection_id, ctx.product, job_type="document_ingest", resource_type="ingest", payload=body.model_dump()
+        )
+        return {"job_id": str(jid), "status": "queued"}
+
+    @app.get("/connections/{connection_id}/knowledge")
+    def knowledge(ctx: Ctx, connection_id: UUID, principal: str, limit: int = 200) -> list[dict[str, Any]]:
+        """Fragments the given Wayam principal may read, after source ACL, freshness and connection checks."""
+        return rt().knowledge.visible_fragments(ctx, connection_id, wayam_principal=principal, limit=min(limit, 1000))
+
     @app.get("/connections/{connection_id}/jobs")
     def jobs(ctx: Ctx, connection_id: UUID) -> list[dict[str, Any]]:
         rt().connections.get(ctx, connection_id)

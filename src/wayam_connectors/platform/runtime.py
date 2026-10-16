@@ -19,11 +19,16 @@ from .credentials import CredentialStore, backend_from_settings
 from .db import Store
 from .file_import import FileImportService
 from .jobs import JobQueue
+from .knowledge_access import KnowledgeAccessService
 from .raw_store import LocalEncryptedRawStore
 from .records import RecordStore
 from .registry import ConnectorEntry, load_registry
 from .tenancy import GrantService, TenantService
 from .webhooks import WebhookInbox
+
+# Connection config section owned by the platform (product-side settings such as knowledge ACL principals).
+# It is never passed to the adapter, so adapter config schemas stay strict.
+PLATFORM_CONFIG_KEY = "_platform"
 
 
 @dataclass
@@ -39,6 +44,7 @@ class Runtime:
     jobs: JobQueue
     webhooks: WebhookInbox
     file_import: FileImportService
+    knowledge: KnowledgeAccessService
 
     def adapter_for(
         self, entry: ConnectorEntry, config: dict[str, Any] | None, secret: dict[str, Any] | None, context: AdapterContext | None = None
@@ -46,8 +52,9 @@ class Runtime:
         """Instantiate an adapter. Parsers take no connection; provider adapters take config, secret and context."""
         if entry.manifest.capabilities == [Capability.FILE_PARSER]:
             return entry.adapter_cls()
+        adapter_config = {k: v for k, v in (config or {}).items() if k != PLATFORM_CONFIG_KEY}
         try:
-            return entry.adapter_cls(config or {}, secret or {}, context=context)
+            return entry.adapter_cls(adapter_config, secret or {}, context=context)
         except PydanticValidationError as exc:
             # never echo input values: the secret part may be among them
             errors = [
@@ -76,6 +83,7 @@ def build_runtime(settings: Settings | None = None, *, dsn: str | None = None, r
         jobs=JobQueue(store, lease_seconds=settings.job_lease_seconds),
         webhooks=WebhookInbox(store),
         file_import=FileImportService(registry, grants, records, raw),
+        knowledge=KnowledgeAccessService(store, grants),
     )
 
 

@@ -1,6 +1,41 @@
 # BUILD_STATUS
 
-Last session: 2026-10-16 (session 3). Read this before resuming. Earlier session notes follow the session 3 block.
+Last session: 2026-10-16 (session 4). Read this before resuming. Earlier session notes follow the session 4 block.
+
+## Session 4: completed scopes
+
+* **Bodham ingest job** (`document_ingest`): cloud document -> `fetch_document` -> format adapter chosen by
+  name/MIME (`platform/parsers.py`) -> `knowledge.fragment` records with the document version -> ACL written per
+  document from the connection's `_platform.knowledge_acl_principals`. Superseded fragments become delete records,
+  deleted documents lose their fragments and ACL, unsupported/unparsable files are quarantined, unchanged documents
+  only refresh ACL evidence. `POST /connections/{id}/ingest` and `GET /connections/{id}/knowledge?principal=`.
+* **Reserved `_platform` connection-config section** (stripped before adapters see the config).
+* **Knowledge access grant**: FileParser *or* DocumentFetch on the connection.
+* **OpenTelemetry spans** across `ProviderHttp`, `JobQueue.claim`, worker jobs and `commit_page`, attribute
+  allowlist, test with an in-memory exporter proving no secrets leak and errors are marked.
+* **Live S3 test** (`tests/live/test_s3_live.py`) behind `WAYAM_LIVE_S3=1` + bucket/credential variables; BLOCKED here.
+* **E2E** `tests/e2e/test_bodham_s3_ingest.py`: S3 (botocore stubs serving the Office fixtures) -> listing -> ingest
+  -> cited fragments for an all-staff user and nothing for an outsider; new version supersedes; deleted object
+  disappears; no principals -> nothing readable.
+
+## Session 4: tests and results
+
+```
+ruff check / format --check                 -> clean
+mypy                                        -> Success: no issues found in 69 source files
+validate-manifests / validate-catalog       -> 7 connectors, catalog OK
+pytest -q (offline lane)                    -> 111 passed, 4 skipped (GitHub + S3 live tests BLOCKED without credentials)
+```
+Acceptance coverage added: Bodham cited-answer journey from a cloud source (T-48 part 2 at fixture level), T-15 for
+fragments (deleted source document removes derived content), T-29 refresh of ACL evidence on unchanged documents.
+
+## Session 4: next runnable steps
+
+1. `make test`; live lanes: `WAYAM_LIVE_GITHUB=1 ...` and `WAYAM_LIVE_S3=1 ...` when credentials exist.
+2. Scheduler: periodic `record_sync`/`document_ingest`/`webhook_process` enqueueing per connection (cron-like
+   table + a `schedule` worker tick) so freshness/lag can be measured and exposed.
+3. Freshness/lag metrics endpoint from `checkpoint.last_success_at`, job counts and quarantine counts per connection.
+4. Microsoft Graph transport + SharePoint/OneDrive, Jira Cloud, Vercel, SQL Server as access appears.
 
 ## Session 3: completed scopes
 

@@ -17,6 +17,7 @@ from wayam_connectors.contracts.envelope import Operation, SourceEnvelope
 from wayam_connectors.contracts.errors import ConnectorError
 
 from .db import Store
+from .telemetry import span
 
 
 @dataclass
@@ -71,7 +72,17 @@ class RecordStore:
     ) -> CommitStats:
         """`seen` = (object_type, object_id) pairs observed on this page of a full crawl, recorded in the same transaction."""
         stats = CommitStats()
-        with self.store.tenant_tx(tenant_id) as cur:
+        with (
+            span(
+                "records.commit_page",
+                tenant_id=tenant_id,
+                connection_id=connection_id,
+                resource_type=resource_type,
+                resource_id=resource_id,
+                job_id=job_id,
+            ) as sp,
+            self.store.tenant_tx(tenant_id) as cur,
+        ):
             for otype, oid in seen or []:
                 cur.execute(
                     "INSERT INTO crawl_seen (tenant_id, connection_id, crawl_id, source_object_type, source_object_id) "
@@ -185,6 +196,9 @@ class RecordStore:
                     ),
                 )
                 stats.outbox_events += 1
+            sp.set_attribute("inserted", stats.inserted)
+            sp.set_attribute("replayed", stats.replayed)
+            sp.set_attribute("quarantined", stats.quarantined)
         return stats
 
     def current_versions(

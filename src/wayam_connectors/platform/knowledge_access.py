@@ -128,7 +128,11 @@ class KnowledgeAccessService:
         self, ctx: TenantContext, connection_id: UUID, *, wayam_principal: str, limit: int = 200, now: datetime | None = None
     ) -> list[dict[str, Any]]:
         """Fragments the given Wayam principal may read, with the ACL reason attached. Fails closed on every doubt."""
-        self.grants.require(ctx, connection_id, "FileParser")  # product must hold a grant on this connection
+        # the product must hold a content-bearing grant on this connection (parsers for uploads, DocumentFetch for cloud sources)
+        try:
+            self.grants.require(ctx, connection_id, "FileParser")
+        except PolicyError:
+            self.grants.require(ctx, connection_id, "DocumentFetch")
         now = now or datetime.now(UTC)
         with self.store.tenant_tx(ctx.tenant_id) as cur:
             cur.execute("SELECT status FROM connection WHERE tenant_id=%s AND id=%s", (ctx.tenant_id, connection_id))

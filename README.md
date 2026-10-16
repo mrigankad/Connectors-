@@ -44,5 +44,6 @@ Everything else in the 294-entry catalog is `candidate` and has no code. See `do
 | `wayam-connectors export-openapi` | write `packages/contracts/openapi.json` (SDK generation input) |
 | `python scripts/generate_sdks.py [--python-only]` | regenerate `packages/sdk-python` and `packages/sdk-typescript` from the OpenAPI contract |
 | `WAYAM_LIVE_GITHUB=1 WAYAM_LIVE_GITHUB_TOKEN=... make test-live` | live GitHub verification against `WAYAM_LIVE_GITHUB_REPO` (default mrigankad/Chakram) |
-| `wayam-connectors serve` / `worker` | run the control API / the job worker (`record_sync`, `webhook_process`, `connection_check` handlers) |
+| `wayam-connectors serve` / `worker` | run the control API / the job worker (`record_sync`, `document_ingest`, `webhook_process`, `connection_check`) |
+| `WAYAM_LIVE_S3=1 WAYAM_LIVE_S3_BUCKET=... make test-live` | live S3 verification (see `tests/live/test_s3_live.py` for the variables) |
 | `make test-live` | opt-in live tests; blocked (not faked) without credentials |

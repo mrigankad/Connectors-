@@ -1,0 +1,10 @@
+{
+  "name": "@wayam/connectors-sdk",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "client.ts",
+  "scripts": {
+    "generate": "npx -y openapi-typescript@7.6.1 ../contracts/openapi.json -o schema.d.ts"
+  }
+}

@@ -4,6 +4,8 @@ on:
   push:
     branches: ["**"]
   pull_request:
+  schedule:
+    - cron: "17 3 * * 1-5"
 
 permissions:
   contents: read
@@ -44,16 +46,29 @@ jobs:
         run: PGPASSWORD=wayam psql -h 127.0.0.1 -U wayam -d wayam_connectors_test -c "ALTER ROLE wayam CREATEROLE;"
       - name: Tests (unit, contract, integration, e2e)
         run: .venv/bin/python -m pytest -q -m "not live"
-      - name: OpenAPI contract is up to date
+      - name: OpenAPI contract and generated Python SDK are up to date
         run: |
           .venv/bin/python -m wayam_connectors.cli export-openapi /tmp/openapi.json
           diff -q /tmp/openapi.json packages/contracts/openapi.json
+          cp packages/sdk-python/wayam_connectors_sdk/client.py /tmp/client.py
+          .venv/bin/python scripts/generate_sdks.py --python-only
+          diff -q /tmp/client.py packages/sdk-python/wayam_connectors_sdk/client.py
+      - name: Generated SDK imports
+        run: .venv/bin/python -c "import sys; sys.path.insert(0, 'packages/sdk-python'); import wayam_connectors_sdk"
 
   live-canary:
     # Credentialed canaries against approved test tenants. Runs only on a schedule when secrets exist; never on PRs.
+    # Requires repository secret WAYAM_LIVE_GITHUB_TOKEN (fine-grained PAT, read-only on the canary repository).
     name: Live canary (scheduled, needs secrets)
     if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: echo "No live connectors are configured yet (see docs/credential-matrix.md)."
+      - uses: astral-sh/setup-uv@v6
+      - run: uv venv --python 3.12 .venv && uv pip install --python .venv/bin/python -e ".[dev]"
+      - name: GitHub live tests
+        env:
+          WAYAM_LIVE_GITHUB: ${{ secrets.WAYAM_LIVE_GITHUB_TOKEN != '' && '1' || '0' }}
+          WAYAM_LIVE_GITHUB_TOKEN: ${{ secrets.WAYAM_LIVE_GITHUB_TOKEN }}
+          WAYAM_LIVE_GITHUB_REPO: mrigankad/Chakram
+        run: .venv/bin/python -m pytest -q -m live tests/live

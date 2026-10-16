@@ -695,6 +695,65 @@
         }
       }
     },
+    "/webhooks/{connection_id}": {
+      "post": {
+        "summary": "Webhook",
+        "description": "Provider webhook ingress. The tenant comes from the registered webhook route (X-Wayam-Tenant is the\ntenant id embedded in the URL the operator registered at the provider), the signature is verified over the\nraw bytes with the connection's webhook secret, and the delivery is stored before acknowledgement.",
+        "operationId": "webhook_webhooks__connection_id__post",
+        "parameters": [
+          {
+            "name": "connection_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Connection Id"
+            }
+          },
+          {
+            "name": "x-wayam-tenant",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Wayam-Tenant"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Webhook Webhooks  Connection Id  Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/connections/{connection_id}/records": {
       "get": {
         "summary": "Records",

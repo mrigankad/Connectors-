@@ -33,6 +33,7 @@ from wayam_connectors.contracts.errors import (
     UnsupportedOperationError,
     ValidationError,
 )
+from wayam_connectors.contracts.identity import AdapterContext
 
 from .sql_guard import guard_read_only, wrap_with_limit
 
@@ -77,7 +78,8 @@ class PostgresBoundedQuery:
     CONNECTOR_ID = CONNECTOR_ID
     ADAPTER_VERSION = ADAPTER_VERSION
 
-    def __init__(self, config: Mapping[str, Any], secret: Mapping[str, Any]) -> None:
+    def __init__(self, config: Mapping[str, Any], secret: Mapping[str, Any], context: AdapterContext | None = None) -> None:
+        self.context = context
         self.config = PostgresConfig.model_validate(dict(config))
         self.secret = PostgresSecret.model_validate(dict(secret))
         if not self.config.allow_private_network:

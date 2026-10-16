@@ -1,0 +1,17 @@
+{
+  "total_count": 1,
+  "workflows": [
+    {
+      "id": 386796586,
+      "node_id": "W_kwDOVMZfCM4XDgwq",
+      "name": "CI",
+      "path": ".github/workflows/ci.yml",
+      "state": "active",
+      "created_at": "2026-10-16T20:16:10.000+05:30",
+      "updated_at": "2026-10-16T20:16:10.000+05:30",
+      "url": "https://api.github.com/repos/mrigankad/Chakram/actions/workflows/386796586",
+      "html_url": "https://github.com/mrigankad/Chakram/blob/main/.github/workflows/ci.yml",
+      "badge_url": "https://github.com/mrigankad/Chakram/workflows/CI/badge.svg"
+    }
+  ]
+}

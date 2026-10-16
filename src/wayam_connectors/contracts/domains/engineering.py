@@ -60,6 +60,17 @@ class WorkflowRun(DomainRecord):
     run_attempt: int | None = None
 
 
+class WorkflowJob(DomainRecord):
+    run_id: str
+    job_id: str
+    name: str
+    status: str | None
+    conclusion: str | None
+    started_at_iso: str | None = None
+    completed_at_iso: str | None = None
+    run_attempt: int | None = None
+
+
 class Artifact(DomainRecord):
     run_id: str
     artifact_id: str

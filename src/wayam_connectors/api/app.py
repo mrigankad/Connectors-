@@ -19,7 +19,7 @@ from wayam_connectors.contracts.errors import (
     UnsupportedOperationError,
     ValidationError,
 )
-from wayam_connectors.contracts.identity import Product, TenantContext
+from wayam_connectors.contracts.identity import AdapterContext, Product, TenantContext
 from wayam_connectors.platform.runtime import Runtime, default_runtime
 from wayam_connectors.platform.security.redaction import redact
 
@@ -196,6 +196,35 @@ def create_app(runtime: Runtime | None = None) -> FastAPI:
             control_totals=body.control_totals,
             allow_duplicate_input=body.allow_duplicate_input,
         )
+
+    @app.post("/webhooks/{connection_id}")
+    async def webhook(connection_id: UUID, request: Request, x_wayam_tenant: Annotated[str | None, Header()] = None) -> dict[str, Any]:
+        """Provider webhook ingress. The tenant comes from the registered webhook route (X-Wayam-Tenant is the
+        tenant id embedded in the URL the operator registered at the provider), the signature is verified over the
+        raw bytes with the connection's webhook secret, and the delivery is stored before acknowledgement."""
+        r = rt()
+        if not x_wayam_tenant:
+            raise AuthError("missing tenant route header")
+        try:
+            tenant_id = UUID(x_wayam_tenant)
+        except ValueError as exc:
+            raise AuthError("invalid tenant route header") from exc
+        conn = r.connections.get_by_ids(tenant_id, connection_id)
+        entry = r.registry[conn["connector_id"]]
+        if not entry.manifest.supports(Capability.WEBHOOK_RECEIVER):
+            raise UnsupportedOperationError("connector has no webhook receiver")
+        secret = r.credentials.get(tenant_id, connection_id)
+        hook_secret = secret.get("webhook_secret")
+        if not hook_secret:
+            raise AuthError("connection has no webhook secret configured")
+        receiver = r.adapter_for(
+            entry,
+            conn["config"],
+            secret,
+            context=AdapterContext(tenant_id=tenant_id, connection_id=connection_id, product=Product(conn.get("product") or "platform")),
+        )
+        body = await request.body()
+        return r.webhooks.receive(tenant_id, connection_id, receiver, headers=dict(request.headers), body=body, secret=hook_secret.encode())
 
     @app.get("/connections/{connection_id}/records")
     def records(

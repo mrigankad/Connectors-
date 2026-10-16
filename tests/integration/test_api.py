@@ -166,3 +166,43 @@ def test_worker_runs_connection_check_job(client, tenants, tenant_a):
     jid2 = rt.jobs.enqueue(tenant_a.tenant_id, UUID(cid), Product.PLATFORM, job_type="unknown_type", resource_type="x")
     assert run_once(rt, {}, "w") == "failed"
     assert c.get(f"/jobs/{jid2}", headers=_h(admin)).json()["last_error"]["message"].startswith("no handler")
+
+
+def test_webhook_ingress_verifies_and_stores(client, tenants, tenant_a):
+    import hashlib
+    import hmac
+    import json as _json
+
+    c, rt = client
+    admin = tenants.issue_api_key(tenant_a.tenant_id, tenant_a.admin.product, ["admin"])
+    r = c.post(
+        "/connections",
+        headers=_h(admin),
+        json={
+            "connector_id": "github.repositories",
+            "name": "chakram",
+            "config": {"repositories": ["mrigankad/Chakram"], "auth_mode": "token"},
+            "secret": {"token": "ghp_x", "webhook_secret": "hook"},
+        },
+    )
+    assert r.status_code == 201, r.text
+    cid = r.json()["id"]
+    body = _json.dumps({"zen": "Keep it logically awesome.", "repository": {"id": 1422286600, "full_name": "mrigankad/Chakram"}}).encode()
+    sig = "sha256=" + hmac.new(b"hook", body, hashlib.sha256).hexdigest()
+    headers = {
+        "X-Wayam-Tenant": str(tenant_a.tenant_id),
+        "X-Hub-Signature-256": sig,
+        "X-GitHub-Delivery": "dlv-1",
+        "X-GitHub-Event": "ping",
+        "Content-Type": "application/json",
+    }
+    r = c.post(f"/webhooks/{cid}", content=body, headers=headers)
+    assert r.status_code == 200 and r.json() == {"status": "received", "delivery_id": "dlv-1", "event_type": "ping", "duplicate": False}
+    assert c.post(f"/webhooks/{cid}", content=body, headers=headers).json()["duplicate"] is True
+    assert c.post(f"/webhooks/{cid}", content=body + b"x", headers=headers).status_code == 401  # tampered body
+    assert (
+        c.post(f"/webhooks/{cid}", content=body, headers={**headers, "X-Wayam-Tenant": str(__import__("uuid").uuid4())}).status_code == 403
+    )
+    assert c.post(f"/webhooks/{cid}", content=body, headers={k: v for k, v in headers.items() if k != "X-Wayam-Tenant"}).status_code == 401
+    pending = rt.webhooks.pending(tenant_a.tenant_id, __import__("uuid").UUID(cid))
+    assert len(pending) == 1 and pending[0]["event_type"] == "ping"

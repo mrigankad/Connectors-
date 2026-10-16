@@ -1,0 +1,166 @@
+[
+ {
+  "sha": "3c2dbb424ba3d4f71e8521925b49bc901505094b",
+  "node_id": "C_kwDOVMZfCNoAKDNjMmRiYjQyNGJhM2Q0ZjcxZTg1MjE5MjViNDliYzkwMTUwNTA5NGI",
+  "commit": {
+   "author": {
+    "name": "Mriganka",
+    "email": "redacted@example.invalid",
+    "date": "2026-10-15T03:17:30Z"
+   },
+   "committer": {
+    "name": "Mriganka",
+    "email": "redacted@example.invalid",
+    "date": "2026-10-15T03:17:30Z"
+   },
+   "message": "App Builder: live preview, Chronos kit, design editor, storage and security fixes\n\nLive preview\n- Compile the generated workspace in a sandboxed iframe (Sucrase + esm.sh) and\n  render it while files stream in; planned files show placeholders.\n- Generation is a server-side run the page re-attaches to after a reload;\n  pages generate in parallel after shared files; App.tsx routes and the kit\n  sidebar are wired as pages land; JSX in .ts data files is saved as .tsx.\n- Preview toolbar: routes, device widths, light/dark, console with\n  \"Fix with AI\" on compile/render errors.\n\nChronos kit and 3D icons\n- Ship a ported Chronos UI kit (AppShell, PageHeader, Panel, KpiTile,\n  DataTable, Chart, Mark, ...) in every generated app; prompts compose it, so\n  pages are much shorter. Kit is hardened against bad props, sections are\n  error-bounded, components accept className (tailwind-merge), and apps with\n  an older kit are upgraded when opened.\n- Unified 3D icon library (~920 icons from the Wayam library, Manthan, Setu,\n  WayamEye, Chronos) with a manifest; prompts get relevant icons only; used\n  icons are bundled into downloads and pushes.\n\nDesign tab\n- Visual edit: click to select (kit components map to the page that used\n  them), edit text in place, typography/fill/border/spacing controls, 3D icon\n  picker, parent select, undo/redo, Ask AI per element.\n- Theme editor: token-level presets, brand colour, surfaces, default mode,\n  status and chart colours, fonts and radius, written to src/design.css and\n  design.json for both the preview and the shipped app.\n\nApps and storage\n- Every App Builder file is mirrored to MongoDB and restored when the disk\n  copy is gone; \"Your apps\" list with open/delete; download as zip.\n\nResponsive layout, charts, dropdowns and naming\n- Kit sizes itself: KPI figures scale to the tile width and value length,\n  labels wrap, KpiGrid/Grid choose their own column count, page titles are\n  fluid; prompts require these layouts.\n- Charts ported from Wayam UI: line/area/bar/combo, donut with centre total,\n  sparkline, gauge, progress ring and bars, funnel, bullet, chart card.\n- Custom keyboard-accessible dropdown in the kit; styled dropdowns in the\n  Design tab.\n- Plain tool names (App Studio, Code Workspace, Product Specs, Sprint\n  Health, CI Health, ...) and plain names for generated apps.\n- Planner writes per-page blueprints; failed builds are repaired once\n  automatically.\n\nSecurity and correctness\n- Fix path traversal in chain analysis, .git access through workspace files,\n  PAT left in clone config, token written to App Builder .git/config, push\n  rejections reported as success, empty-path workspace wipe, login lockout\n  bypass via X-Forwarded-For, SSRF error echo, and several wrong status codes.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>",
+   "tree": {
+    "sha": "b5d8b1aadfb052771095261d12c8a25e79fa932f",
+    "url": "https://api.github.com/repos/mrigankad/Chakram/git/trees/b5d8b1aadfb052771095261d12c8a25e79fa932f"
+   },
+   "url": "https://api.github.com/repos/mrigankad/Chakram/git/commits/3c2dbb424ba3d4f71e8521925b49bc901505094b",
+   "comment_count": 0,
+   "verification": {
+    "verified": false,
+    "reason": "unsigned",
+    "signature": null,
+    "payload": null,
+    "verified_at": null
+   }
+  },
+  "url": "https://api.github.com/repos/mrigankad/Chakram/commits/3c2dbb424ba3d4f71e8521925b49bc901505094b",
+  "html_url": "https://github.com/mrigankad/Chakram/commit/3c2dbb424ba3d4f71e8521925b49bc901505094b",
+  "comments_url": "https://api.github.com/repos/mrigankad/Chakram/commits/3c2dbb424ba3d4f71e8521925b49bc901505094b/comments",
+  "author": {
+   "login": "mrigankad",
+   "id": 240449485,
+   "node_id": "U_kgDODlT3zQ",
+   "avatar_url": "https://avatars.githubusercontent.com/u/240449485?v=4",
+   "gravatar_id": "",
+   "url": "https://api.github.com/users/mrigankad",
+   "html_url": "https://github.com/mrigankad",
+   "followers_url": "https://api.github.com/users/mrigankad/followers",
+   "following_url": "https://api.github.com/users/mrigankad/following{/other_user}",
+   "gists_url": "https://api.github.com/users/mrigankad/gists{/gist_id}",
+   "starred_url": "https://api.github.com/users/mrigankad/starred{/owner}{/repo}",
+   "subscriptions_url": "https://api.github.com/users/mrigankad/subscriptions",
+   "organizations_url": "https://api.github.com/users/mrigankad/orgs",
+   "repos_url": "https://api.github.com/users/mrigankad/repos",
+   "events_url": "https://api.github.com/users/mrigankad/events{/privacy}",
+   "received_events_url": "https://api.github.com/users/mrigankad/received_events",
+   "type": "User",
+   "user_view_type": "public",
+   "site_admin": false
+  },
+  "committer": {
+   "login": "mrigankad",
+   "id": 240449485,
+   "node_id": "U_kgDODlT3zQ",
+   "avatar_url": "https://avatars.githubusercontent.com/u/240449485?v=4",
+   "gravatar_id": "",
+   "url": "https://api.github.com/users/mrigankad",
+   "html_url": "https://github.com/mrigankad",
+   "followers_url": "https://api.github.com/users/mrigankad/followers",
+   "following_url": "https://api.github.com/users/mrigankad/following{/other_user}",
+   "gists_url": "https://api.github.com/users/mrigankad/gists{/gist_id}",
+   "starred_url": "https://api.github.com/users/mrigankad/starred{/owner}{/repo}",
+   "subscriptions_url": "https://api.github.com/users/mrigankad/subscriptions",
+   "organizations_url": "https://api.github.com/users/mrigankad/orgs",
+   "repos_url": "https://api.github.com/users/mrigankad/repos",
+   "events_url": "https://api.github.com/users/mrigankad/events{/privacy}",
+   "received_events_url": "https://api.github.com/users/mrigankad/received_events",
+   "type": "User",
+   "user_view_type": "public",
+   "site_admin": false
+  },
+  "parents": [
+   {
+    "sha": "7e1fe99f50c710c3cd86219ea92c6b5670ef60d9",
+    "url": "https://api.github.com/repos/mrigankad/Chakram/commits/7e1fe99f50c710c3cd86219ea92c6b5670ef60d9",
+    "html_url": "https://github.com/mrigankad/Chakram/commit/7e1fe99f50c710c3cd86219ea92c6b5670ef60d9"
+   }
+  ]
+ },
+ {
+  "sha": "7e1fe99f50c710c3cd86219ea92c6b5670ef60d9",
+  "node_id": "C_kwDOVMZfCNoAKDdlMWZlOTlmNTBjNzEwYzNjZDg2MjE5ZWE5MmM2YjU2NzBlZjYwZDk",
+  "commit": {
+   "author": {
+    "name": "Mriganka",
+    "email": "redacted@example.invalid",
+    "date": "2026-10-13T10:24:57Z"
+   },
+   "committer": {
+    "name": "Mriganka",
+    "email": "redacted@example.invalid",
+    "date": "2026-10-13T10:24:57Z"
+   },
+   "message": "Prepare for production deploy: sign-in only, safer defaults, leaner image\n\n- Sign-up disabled by default; a seed account is created from configuration.\n- List settings accept JSON or commas; localhost origins dropped in production.\n- API docs hidden in production; database-only /readyz probe; sign-in rate limit.\n- Process-wide browser cap, request time limit, socket origin check.\n- Image: init process, no duplicated browser layer, proxy-aware server.\n- Pages load on demand; marks on empty states, verdicts, stages and KPI tiles.\n\nCo-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>",
+   "tree": {
+    "sha": "82b5e84ea92c234dbcba0cb4469e1492b3696774",
+    "url": "https://api.github.com/repos/mrigankad/Chakram/git/trees/82b5e84ea92c234dbcba0cb4469e1492b3696774"
+   },
+   "url": "https://api.github.com/repos/mrigankad/Chakram/git/commits/7e1fe99f50c710c3cd86219ea92c6b5670ef60d9",
+   "comment_count": 0,
+   "verification": {
+    "verified": false,
+    "reason": "unsigned",
+    "signature": null,
+    "payload": null,
+    "verified_at": null
+   }
+  },
+  "url": "https://api.github.com/repos/mrigankad/Chakram/commits/7e1fe99f50c710c3cd86219ea92c6b5670ef60d9",
+  "html_url": "https://github.com/mrigankad/Chakram/commit/7e1fe99f50c710c3cd86219ea92c6b5670ef60d9",
+  "comments_url": "https://api.github.com/repos/mrigankad/Chakram/commits/7e1fe99f50c710c3cd86219ea92c6b5670ef60d9/comments",
+  "author": {
+   "login": "mrigankad",
+   "id": 240449485,
+   "node_id": "U_kgDODlT3zQ",
+   "avatar_url": "https://avatars.githubusercontent.com/u/240449485?v=4",
+   "gravatar_id": "",
+   "url": "https://api.github.com/users/mrigankad",
+   "html_url": "https://github.com/mrigankad",
+   "followers_url": "https://api.github.com/users/mrigankad/followers",
+   "following_url": "https://api.github.com/users/mrigankad/following{/other_user}",
+   "gists_url": "https://api.github.com/users/mrigankad/gists{/gist_id}",
+   "starred_url": "https://api.github.com/users/mrigankad/starred{/owner}{/repo}",
+   "subscriptions_url": "https://api.github.com/users/mrigankad/subscriptions",
+   "organizations_url": "https://api.github.com/users/mrigankad/orgs",
+   "repos_url": "https://api.github.com/users/mrigankad/repos",
+   "events_url": "https://api.github.com/users/mrigankad/events{/privacy}",
+   "received_events_url": "https://api.github.com/users/mrigankad/received_events",
+   "type": "User",
+   "user_view_type": "public",
+   "site_admin": false
+  },
+  "committer": {
+   "login": "mrigankad",
+   "id": 240449485,
+   "node_id": "U_kgDODlT3zQ",
+   "avatar_url": "https://avatars.githubusercontent.com/u/240449485?v=4",
+   "gravatar_id": "",
+   "url": "https://api.github.com/users/mrigankad",
+   "html_url": "https://github.com/mrigankad",
+   "followers_url": "https://api.github.com/users/mrigankad/followers",
+   "following_url": "https://api.github.com/users/mrigankad/following{/other_user}",
+   "gists_url": "https://api.github.com/users/mrigankad/gists{/gist_id}",
+   "starred_url": "https://api.github.com/users/mrigankad/starred{/owner}{/repo}",
+   "subscriptions_url": "https://api.github.com/users/mrigankad/subscriptions",
+   "organizations_url": "https://api.github.com/users/mrigankad/orgs",
+   "repos_url": "https://api.github.com/users/mrigankad/repos",
+   "events_url": "https://api.github.com/users/mrigankad/events{/privacy}",
+   "received_events_url": "https://api.github.com/users/mrigankad/received_events",
+   "type": "User",
+   "user_view_type": "public",
+   "site_admin": false
+  },
+  "parents": [
+   {
+    "sha": "cb794889fd8d22f1b8d58773e0df27c2ec4e485c",
+    "url": "https://api.github.com/repos/mrigankad/Chakram/commits/cb794889fd8d22f1b8d58773e0df27c2ec4e485c",
+    "html_url": "https://github.com/mrigankad/Chakram/commit/cb794889fd8d22f1b8d58773e0df27c2ec4e485c"
+   }
+  ]
+ }
+]

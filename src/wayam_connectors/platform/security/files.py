@@ -35,7 +35,14 @@ def check_size(data: bytes, limits: FileLimits = DEFAULT_LIMITS) -> None:
         raise PolicyError("file exceeds size limit", details={"size": len(data), "max": limits.max_bytes})
 
 
-def inspect_ooxml_zip(data: bytes, limits: FileLimits = DEFAULT_LIMITS, *, allowed_prefixes: tuple[str, ...] = ()) -> zipfile.ZipFile:
+def inspect_zip(data: bytes, limits: FileLimits = DEFAULT_LIMITS) -> zipfile.ZipFile:
+    """Open any untrusted zip and reject traversal, too many members and decompression bombs."""
+    return inspect_ooxml_zip(data, limits, scan_xml=False)
+
+
+def inspect_ooxml_zip(
+    data: bytes, limits: FileLimits = DEFAULT_LIMITS, *, allowed_prefixes: tuple[str, ...] = (), scan_xml: bool = True
+) -> zipfile.ZipFile:
     """Open an OOXML container and reject traversal, bombs, macros, ActiveX and XML entity declarations.
 
     Returns an open ZipFile the parser may read from. Member XML is scanned for `<!ENTITY`/`<!DOCTYPE`
@@ -65,7 +72,7 @@ def inspect_ooxml_zip(data: bytes, limits: FileLimits = DEFAULT_LIMITS, *, allow
     if allowed_prefixes and not any(i.filename.startswith(allowed_prefixes) for i in infos):
         raise ValidationError("container does not look like the expected Office document")
     for info in infos:
-        if info.filename.lower().endswith((".xml", ".rels")):
+        if scan_xml and info.filename.lower().endswith((".xml", ".rels")):
             with zf.open(info) as fh:
                 head = fh.read(min(info.file_size, 65536))
             if _ENTITY_RE.search(head) or _DOCTYPE_RE.search(head):

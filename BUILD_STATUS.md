@@ -1,6 +1,71 @@
 # BUILD_STATUS
 
-Last session: 2026-10-16 (session 1). Read this before resuming.
+Last session: 2026-10-16 (session 2). Read this before resuming. Session 1 notes follow the session 2 block.
+
+## Session 2: completed scopes
+
+* **Shared HTTP transport** (`platform/http.py`): policy-bound httpx client (allowlisted origins, https only, no
+  credentials in URLs, private/metadata ranges rejected on direct egress; DNS check auto-disabled behind an egress
+  proxy), single validated redirect hop that strips the provider token and API media headers for pre-signed storage
+  URLs, size cap, `Retry-After`/`X-RateLimit` classification, `Link` pagination helper, redaction of error details.
+* **GitHub provider core + two surfaces**: `github.repositories` (ConnectionCheck incl. write-capable-credential
+  detection, ResourceDiscovery, RecordSync for repository/commit/pull_request/issue with overlap watermarks and
+  Link-URL resume cursors, WebhookReceiver with X-Hub-Signature-256) and `github.actions` (ConnectionCheck,
+  RecordSync for workflow_run/workflow_job/artifact, DocumentFetch for redacted run logs; no dispatch/rerun).
+  Engineering mapping `engineering.github/1`, new `WorkflowJob` domain record, `AdapterContext` binding.
+* **Real provider fixtures** captured from api.github.com for mrigankad/Chakram (`fixtures/github/`, emails
+  redacted, headers trimmed); PR/issue fixtures are SYNTHETIC and labelled inside the files.
+* **Bodham knowledge path**: migration `0002_knowledge_access.sql` (source principals, per-document ACL state,
+  principal mapping), `KnowledgeAccessService` (nested groups, 15-minute ACL evidence window, fail-closed on unknown
+  identity/stale ACL/deleted document/revoked connection), DOCX/PPTX import to `knowledge.fragment` with document ids.
+* **API**: `POST /webhooks/{connection_id}` (tenant from route header, raw-byte signature verification, durable
+  inbox, dedup). **SDKs**: `scripts/generate_sdks.py` produces `packages/sdk-python` (httpx client, one method per
+  operation) and `packages/sdk-typescript` (openapi-typescript schema + fetch client); CI checks the Python SDK is
+  fresh. **CI**: scheduled live canary job wired to `WAYAM_LIVE_GITHUB_TOKEN`.
+
+## Session 2: tests and results
+
+```
+ruff check / ruff format --check            -> All checks passed / 85 files already formatted
+mypy                                        -> Success: no issues found in 62 source files
+validate-manifests / validate-catalog       -> 6 connectors, catalog OK
+pytest -q (offline lane)                    -> 100 passed, 3 skipped (the live tests, BLOCKED without WAYAM_LIVE_GITHUB=1)
+WAYAM_LIVE_GITHUB=1 WAYAM_LIVE_GITHUB_AUTH_MODE=ambient pytest -m live
+                                            -> 2 passed (repositories, actions runs/jobs/artifacts), 1 skipped:
+                                               BLOCKED log download, storage origin denied by egress policy (CONNECT 403)
+```
+Live environment: api.github.com, `X-GitHub-Api-Version-Selected: 2022-11-28`, credentials injected by the session
+egress gateway (write-capable; adapters are read-only by construction and the check reports it).
+Acceptance scenarios newly covered: T-09 (pagination cycle), T-10/T-11 (equal timestamps, overlap), T-20 (429/Retry-After),
+T-21 (5xx/timeouts), T-24 (bad signature), T-25 (duplicate delivery), T-27, T-28, T-29, T-30, T-31, T-44 (no
+dispatch/rerun; transport refuses POST), T-45 (repository allowlist), T-47 (redirect origin policy, token stripped),
+Bodham journey (cited fragments behind ACLs). Still open: OAuth group T-04..T-08 (no OAuth provider yet), T-26 ordering
+across webhook + poll, T-39, Chakram lineage journey (needs Vercel), SharePoint/OneDrive/S3/Jira/Vercel/SQL Server.
+
+## Session 2: unresolved blockers
+
+1. Vendor documentation hosts still blocked (403) from the session; GitHub contract pages mark every item
+   *observed* or *knowledge* (`docs/provider-contracts/github-*.md`). Confirm against current docs when reachable.
+2. GitHub log storage origin denied by the egress policy: `fetch_document` is fixture-tested only.
+3. api.vercel.com, graph.microsoft.com and *.atlassian.net are unreachable (connection refused by policy); S3 host
+   reachable but no AWS credentials. Those surfaces remain `candidate`.
+4. Token-mode GitHub auth and private repositories not live-tested (needs `WAYAM_LIVE_GITHUB_TOKEN` in CI secrets).
+5. TypeScript SDK `schema.d.ts` is generated via `npx openapi-typescript@7.6.1`; it ran in this session but CI only
+   checks the Python SDK freshness (npm availability in CI not assumed).
+
+## Session 2: next runnable steps
+
+1. `make test` then `WAYAM_LIVE_GITHUB=1 WAYAM_LIVE_GITHUB_TOKEN=<fine-grained read-only PAT> make test-live`.
+2. Worker handler `record_sync` that drives `RecordSync` adapters page by page through `RecordStore.commit_page`
+   (cursor from `checkpoint`, lease heartbeat per page, partial failures to quarantine) and a webhook processor
+   that turns inbox rows into envelopes via `envelopes_from_delivery` with out-of-order handling (T-26).
+3. Chakram lineage journey once Vercel is reachable: commit -> PR -> workflow run -> deployment.
+4. SQL Server, S3, Graph (SharePoint/OneDrive), Jira, Vercel as before (see session 1 steps), in that order of
+   credential availability.
+
+---
+
+# Session 1 (2026-10-16)
 
 ## Completed scopes
 

@@ -141,8 +141,9 @@ class FileImportService:
                     )
                 )
         elif domain_mapping == "knowledge.fragment":
+            document_id = (mapping_config or {}).get("document_id") or sha
             for item in result.items:
-                payload = dict(item)
+                payload = {"document_id": document_id, "version_id": sha, **item}
                 envelopes.append(
                     SourceEnvelope(
                         tenant_id=ctx.tenant_id,

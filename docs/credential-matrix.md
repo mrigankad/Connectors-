@@ -11,8 +11,8 @@ credential is stored in source. Local tests use `WAYAM_LOCAL_SECRET_KEY` (dev on
 | Amazon S3 | IAM role (STS assume-role) | s3:ListBucket, s3:GetObject, s3:GetObjectVersion on allowlisted prefixes | real AWS test bucket (emulator does not count) | Wayam infra | blocked: no AWS account in session |
 | SharePoint Online | Entra app, Sites.Selected (app) + delegated user for authorization checks | Sites.Selected, Files.Read.Selected | M365 developer tenant with test users/groups | Wayam IT | blocked: no tenant |
 | OneDrive for Business | delegated and app-only | Files.Read / Files.Read.All (edition-dependent) | same tenant | Wayam IT | blocked |
-| GitHub repositories | fine-grained PAT, then GitHub App installation | contents:read, pull_requests:read, issues:read, metadata:read | test org + repo | Chakram team | blocked: no token in session |
-| GitHub Actions | same | actions:read | same | Chakram team | blocked |
+| GitHub repositories | fine-grained PAT, then GitHub App installation | contents:read, pull_requests:read, issues:read, metadata:read | test org + repo | Chakram team | live-verified read path with gateway-injected credentials on mrigankad/Chakram; PAT mode needs `WAYAM_LIVE_GITHUB_TOKEN` (CI canary secret) |
+| GitHub Actions | same | actions:read | same | Chakram team | live-verified runs/jobs/artifacts; log download blocked by egress policy in the build session |
 | Jira Cloud | API token (basic) then OAuth 2.0 3LO | read:jira-work | Atlassian dev site | Chakram team | blocked |
 | Vercel | team-scoped token | read-only project/deployment access | Vercel team with a test project | Chakram team | blocked |
 | Azure Key Vault (secret backend) | managed identity | wrapKey/unwrapKey on one key | Key Vault + identity | Wayam infra | blocked: not implemented (ADR-0003) |

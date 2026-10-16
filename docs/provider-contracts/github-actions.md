@@ -1,13 +1,18 @@
-# Provider contract: GitHub Actions (WCN-099)
+# Provider contract: GitHub Actions (`github.actions`, WCN-099)
 
-Status: **contract_ready pending verification — vendor docs not retrieved in the build session** (egress policy
-returned 403 for the documentation host; see ADR-0004). Catalog docs link: https://docs.github.com/en/rest/actions
+Verified: 2026-10-16, live against `https://api.github.com` for `mrigankad/Chakram` (ambient credentials, see the
+repositories contract). Docs not retrievable in session (ADR-0004): *observed* vs *knowledge* as below.
 
-Nothing below is a verified endpoint claim. Before implementing, retrieve the current official docs and record here:
-exact endpoint/API version, edition/region, supported identity modes, least required scopes, pagination, filters,
-incremental/delete/ACL behaviour, rate limits, error-body semantics and the sandbox access needed.
+| Item | Contract | Basis |
+|---|---|---|
+| Endpoints | `GET /repos/{o}/{r}/actions/workflows`, `.../actions/runs?per_page&created=>=YYYY-MM-DD`, `.../actions/runs/{id}/jobs`, `.../actions/runs/{id}/artifacts`, `.../actions/runs/{id}/logs` (302 to storage) | workflows/runs/jobs/artifacts/logs-302 observed; `created` filter syntax: knowledge |
+| Scopes | actions:read (+ metadata:read) | knowledge |
+| Run identity | `id` immutable; version = `updated_at#run_attempt` so re-runs create new versions | observed fields |
+| Jobs | `jobs[]` with `id`, `run_id`, `name`, `status`, `conclusion`, `started_at`, `completed_at`, `run_attempt` | observed |
+| Artifacts | `artifacts[]` with `id`, `name`, `size_in_bytes`, `expired`, `expires_at` (fixture empty: repo had none) | field names: knowledge |
+| Logs | 302 `Location` to `https://results-receiver.actions.githubusercontent.com/...` (pre-signed; never logged). Adapter follows one redirect only to allowlisted origins, strips the API token and media headers, inspects the zip, returns redacted text. 410 -> `DataError("expired")`; logs of an in-progress run return 404 (-> ScopeError) | redirect origin and in-progress 404 observed; zip layout and 410: knowledge |
+| Mutations | dispatch/rerun/cancel deliberately absent; the shared transport refuses bare POST | by construction (T-44 test) |
 
-Specific items to verify for this surface: actions:read permission, workflow runs/jobs/artifacts endpoints, log download redirect (short-lived signed URL, never logged), artifact retention/expiry, secret redaction already applied by GitHub in logs plus our own redaction, dispatch/rerun endpoints deliberately NOT granted.
-
-Implementation rule: build against a clearly labelled fixture contract only after this page is filled in; the
-adapter's manifest `verification_level` stays `fixture_tested` until a live test against a real tenant passes.
+Live evidence (2026-10-16): check_connection OK (1 workflow), workflow_run sync (7 runs total, paginated), jobs for the
+latest run (3 jobs), artifacts (0). **Log download BLOCKED**: the storage origin is denied by the build session's
+egress policy (CONNECT 403), so `fetch_document` is fixture-tested only.

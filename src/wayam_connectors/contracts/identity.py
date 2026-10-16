@@ -45,3 +45,13 @@ class JobGrant(BaseModel):
     job_id: UUID
     capabilities: frozenset[str]
     expires_at: datetime
+
+
+class AdapterContext(BaseModel):
+    """Who an adapter instance is working for. Set by the runtime, never by the adapter itself."""
+
+    model_config = ConfigDict(frozen=True)
+
+    tenant_id: UUID
+    connection_id: UUID
+    product: Product

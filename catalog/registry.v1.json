@@ -54,15 +54,15 @@
     },
     {
       "catalog_id": "WCN-097",
-      "connector_id": null,
-      "status": "candidate",
-      "owner": "platform-team"
+      "connector_id": "github.repositories",
+      "status": "sandbox_verified",
+      "owner": "chakram-team"
     },
     {
       "catalog_id": "WCN-099",
-      "connector_id": null,
-      "status": "candidate",
-      "owner": "platform-team"
+      "connector_id": "github.actions",
+      "status": "sandbox_verified",
+      "owner": "chakram-team"
     },
     {
       "catalog_id": "WCN-084",

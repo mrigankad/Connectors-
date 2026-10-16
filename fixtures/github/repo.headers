@@ -1,0 +1,8 @@
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Etag: "904c79abb687fb48f5d30aa7b070df1104025c3c5d94852455f1f82a9236d01d"
+X-Github-Api-Version-Selected: 2022-11-28
+X-Ratelimit-Limit: 15000
+X-Ratelimit-Remaining: 14972
+X-Ratelimit-Reset: 1792171457
+X-Ratelimit-Resource: core

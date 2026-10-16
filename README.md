@@ -26,6 +26,8 @@ Docker Compose for API + worker + database: `cp infra/.env.example infra/.env &&
 | `postgresql.bounded_query` (WCN-140) | ConnectionCheck, ResourceDiscovery, BoundedQuery | local_integration_verified |
 | `files.docx` (WCN-285) | FileParser | fixture_tested |
 | `files.pptx` (WCN-286) | FileParser | fixture_tested |
+| `github.repositories` (WCN-097) | ConnectionCheck, ResourceDiscovery, RecordSync, WebhookReceiver | sandbox_verified (live read on mrigankad/Chakram) |
+| `github.actions` (WCN-099) | ConnectionCheck, RecordSync, DocumentFetch | sandbox_verified (logs fixture-only) |
 
 Everything else in the 294-entry catalog is `candidate` and has no code. See `docs/architecture.md`,
 `docs/decisions/`, `docs/provider-contracts/` and `docs/credential-matrix.md`.
@@ -39,5 +41,7 @@ Everything else in the 294-entry catalog is `candidate` and has no code. See `do
 | `wayam-connectors migrate` / `sync-definitions` | apply SQL migrations / upsert connector definitions |
 | `wayam-connectors create-tenant NAME`, `issue-key TENANT PRODUCT [--admin]` | tenancy bootstrap |
 | `wayam-connectors export-openapi` | write `packages/contracts/openapi.json` (SDK generation input) |
+| `python scripts/generate_sdks.py [--python-only]` | regenerate `packages/sdk-python` and `packages/sdk-typescript` from the OpenAPI contract |
+| `WAYAM_LIVE_GITHUB=1 WAYAM_LIVE_GITHUB_TOKEN=... make test-live` | live GitHub verification against `WAYAM_LIVE_GITHUB_REPO` (default mrigankad/Chakram) |
 | `wayam-connectors serve` / `worker` | run the control API / the job worker |
 | `make test-live` | opt-in live tests; blocked (not faked) without credentials |

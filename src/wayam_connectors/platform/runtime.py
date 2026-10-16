@@ -11,6 +11,7 @@ from pydantic import ValidationError as PydanticValidationError
 
 from wayam_connectors.contracts.capabilities import Capability
 from wayam_connectors.contracts.errors import ValidationError
+from wayam_connectors.contracts.identity import AdapterContext
 
 from .config import Settings, get_settings
 from .connections import ConnectionService
@@ -39,12 +40,14 @@ class Runtime:
     webhooks: WebhookInbox
     file_import: FileImportService
 
-    def adapter_for(self, entry: ConnectorEntry, config: dict[str, Any] | None, secret: dict[str, Any] | None) -> Any:
-        """Instantiate an adapter. Parsers take no connection; provider adapters take config + secret."""
+    def adapter_for(
+        self, entry: ConnectorEntry, config: dict[str, Any] | None, secret: dict[str, Any] | None, context: AdapterContext | None = None
+    ) -> Any:
+        """Instantiate an adapter. Parsers take no connection; provider adapters take config, secret and context."""
         if entry.manifest.capabilities == [Capability.FILE_PARSER]:
             return entry.adapter_cls()
         try:
-            return entry.adapter_cls(config or {}, secret or {})
+            return entry.adapter_cls(config or {}, secret or {}, context=context)
         except PydanticValidationError as exc:
             # never echo input values: the secret part may be among them
             errors = [

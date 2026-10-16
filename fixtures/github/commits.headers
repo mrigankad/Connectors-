@@ -1,0 +1,9 @@
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Etag: "3705638a2f99a802ea501012d7aa2413eb2b7a993f974bd1de6f0f4655c0983b"
+Link: <https://api.github.com/repositories/1422286600/commits?per_page=2&page=2>; rel="next", <https://api.github.com/repositories/1422286600/commits?per_page=2&page=2>; rel="last"
+X-Github-Api-Version-Selected: 2022-11-28
+X-Ratelimit-Limit: 15000
+X-Ratelimit-Remaining: 14971
+X-Ratelimit-Reset: 1792171457
+X-Ratelimit-Resource: core

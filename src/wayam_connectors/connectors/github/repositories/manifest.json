@@ -1,0 +1,49 @@
+{
+  "connector_id": "github.repositories",
+  "catalog_id": "WCN-097",
+  "family": "github",
+  "surface": "repositories",
+  "display_name": "GitHub repositories",
+  "edition": "GitHub REST API, X-GitHub-Api-Version 2022-11-28, api.github.com (GitHub.com; GHES untested)",
+  "adapter_version": "0.1.0",
+  "schema_version": "1",
+  "cursor_version": "1",
+  "auth_modes": ["token", "ambient"],
+  "config_schema": {
+    "type": "object",
+    "required": ["repositories"],
+    "properties": {
+      "api_base": {"type": "string", "default": "https://api.github.com"},
+      "repositories": {"type": "array", "items": {"type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"}, "minItems": 1},
+      "auth_mode": {"type": "string", "enum": ["token", "ambient"], "default": "token"},
+      "page_size": {"type": "integer", "minimum": 1, "maximum": 100, "default": 100},
+      "require_read_only_credential": {"type": "boolean", "default": true},
+      "log_download_origins": {"type": "array", "items": {"type": "string"}}
+    },
+    "additionalProperties": false
+  },
+  "auth_schema": {"type": "object", "properties": {"token": {"type": ["string", "null"], "description": "Fine-grained PAT or installation token with read-only repository permissions"}, "webhook_secret": {"type": ["string", "null"]}}, "additionalProperties": false},
+  "capabilities": ["ConnectionCheck", "ResourceDiscovery", "RecordSync", "WebhookReceiver"],
+  "operations": [
+    {"name": "check_connection", "capability": "ConnectionCheck", "description": "GET /repos/{owner}/{repo} for each allowlisted repository; reports write-capable credentials", "scopes": ["metadata:read"], "mutates": false},
+    {"name": "discover", "capability": "ResourceDiscovery", "description": "Allowlisted repositories with immutable ids", "scopes": ["metadata:read"], "mutates": false},
+    {"name": "sync_page", "capability": "RecordSync", "description": "repository, commit (default branch, since watermark), pull_request (sorted by updated asc), issue (since watermark, PRs excluded)", "scopes": ["contents:read", "pull_requests:read", "issues:read", "metadata:read"], "mutates": false},
+    {"name": "verify_delivery", "capability": "WebhookReceiver", "description": "X-Hub-Signature-256 HMAC over raw body; X-GitHub-Delivery as delivery id", "scopes": [], "mutates": false},
+    {"name": "envelopes_from_delivery", "capability": "WebhookReceiver", "description": "pull_request, issues (deleted -> delete op) and push events for allowlisted repositories", "scopes": [], "mutates": false}
+  ],
+  "resource_types": ["repository", "commit", "pull_request", "issue"],
+  "rate_policy": {"requests_per_minute": null, "concurrency": 2, "honour_retry_after": true, "max_attempts": 5, "base_backoff_seconds": 2.0, "max_backoff_seconds": 120.0},
+  "raw_data_support": true,
+  "deletion_semantics": "event",
+  "acl_coverage": "container",
+  "owner": "chakram-team",
+  "limitations": [
+    "Official documentation was not retrievable from the build session; endpoint behaviour was observed live against api.github.com (ADR-0004)",
+    "Pull request listing has no server-side since filter: a full-history pass sorted by updated asc is needed once; later passes skip items older than the watermark client-side",
+    "Deletions: only issue 'deleted' webhook events; repository/PR deletions are not inferred",
+    "GitHub App installation tokens are not minted here (token must be supplied); GHES not tested",
+    "Live verification used credentials injected by the session egress gateway (auth_mode=ambient), which were write-capable: the check reports this and the adapter stays read-only"
+  ],
+  "verification_level": "sandbox_verified",
+  "docs_contract": "docs/provider-contracts/github-repositories.md"
+}

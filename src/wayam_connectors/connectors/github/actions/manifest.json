@@ -1,0 +1,47 @@
+{
+  "connector_id": "github.actions",
+  "catalog_id": "WCN-099",
+  "family": "github",
+  "surface": "actions",
+  "display_name": "GitHub Actions",
+  "edition": "GitHub REST API, X-GitHub-Api-Version 2022-11-28, api.github.com (GitHub.com; GHES untested)",
+  "adapter_version": "0.1.0",
+  "schema_version": "1",
+  "cursor_version": "1",
+  "auth_modes": ["token", "ambient"],
+  "config_schema": {
+    "type": "object",
+    "required": ["repositories"],
+    "properties": {
+      "api_base": {"type": "string", "default": "https://api.github.com"},
+      "repositories": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+      "auth_mode": {"type": "string", "enum": ["token", "ambient"], "default": "token"},
+      "page_size": {"type": "integer", "minimum": 1, "maximum": 100, "default": 100},
+      "require_read_only_credential": {"type": "boolean", "default": true},
+      "log_download_origins": {"type": "array", "items": {"type": "string"}, "default": ["https://results-receiver.actions.githubusercontent.com"]}
+    },
+    "additionalProperties": false
+  },
+  "auth_schema": {"type": "object", "properties": {"token": {"type": ["string", "null"]}, "webhook_secret": {"type": ["string", "null"]}}, "additionalProperties": false},
+  "capabilities": ["ConnectionCheck", "RecordSync", "DocumentFetch"],
+  "operations": [
+    {"name": "check_connection", "capability": "ConnectionCheck", "description": "GET /repos/{owner}/{repo}/actions/workflows per allowlisted repository", "scopes": ["actions:read"], "mutates": false},
+    {"name": "sync_page", "capability": "RecordSync", "description": "workflow_run (created>= date filter + exact updated_at watermark), workflow_job and artifact per run (resource_id owner/name#<run_id>)", "scopes": ["actions:read"], "mutates": false},
+    {"name": "fetch_document", "capability": "DocumentFetch", "description": "Run logs (owner/name#run:<id>): follows the single redirect to an allowlisted storage origin without the API token, inspects the zip, returns redacted text", "scopes": ["actions:read"], "mutates": false}
+  ],
+  "resource_types": ["workflow_run", "workflow_job", "artifact"],
+  "rate_policy": {"requests_per_minute": null, "concurrency": 2, "honour_retry_after": true, "max_attempts": 5, "base_backoff_seconds": 2.0, "max_backoff_seconds": 120.0},
+  "raw_data_support": true,
+  "deletion_semantics": "none",
+  "acl_coverage": "container",
+  "owner": "chakram-team",
+  "limitations": [
+    "Dispatch and rerun are not implemented (no ReviewedAction); the shared transport refuses bare mutations",
+    "Artifact download is not implemented (only metadata incl. expiry); logs beyond retention return 410 which maps to DataError('expired')",
+    "The `created` run filter is date-granular; exact filtering by updated_at happens client-side with the overlap window",
+    "Log storage origin was observed live on 2026-10-16 (results-receiver.actions.githubusercontent.com) and may change; it is configurable",
+    "Official documentation was not retrievable from the build session (ADR-0004); live verification used gateway-injected credentials"
+  ],
+  "verification_level": "sandbox_verified",
+  "docs_contract": "docs/provider-contracts/github-actions.md"
+}
